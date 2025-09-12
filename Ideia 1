@@ -1,0 +1,1094 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Fit & Chic — Organizador Fitness</title>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+
+  <!-- Chart.js for progresso -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    :root{
+      --lavender-100: #F3EAF6;
+      --lavender-200: #E6D9EE;
+      --lavender-300: #C8A2C8; /* lavanda */
+      --lavender-400: #B99AC6;
+      --gold: #D4AF37;
+      --accent: #FF78A6; /* pequeno contraste (opcional) */
+      --bg: #FFFFFF;
+      --muted: #6b6b6b;
+      --glass: rgba(255,255,255,0.6);
+      --radius: 14px;
+      --shadow: 0 6px 20px rgba(0,0,0,0.08);
+    }
+
+    html,body{
+      height:100%;
+      margin:0;
+      font-family: "Montserrat", sans-serif;
+      background: linear-gradient(180deg, #F9F5FB 0%, var(--lavender-100) 100%);
+      color:#1a1a1a;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+
+    /* App container */
+    .app {
+      max-width:1100px;
+      margin:28px auto;
+      display:grid;
+      grid-template-columns: 260px 1fr;
+      gap:20px;
+      padding:22px;
+      align-items:start;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      background: linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0.4));
+      border-radius: var(--radius);
+      padding:18px;
+      box-shadow: var(--shadow);
+      position:sticky;
+      top:22px;
+      height: fit-content;
+    }
+    .brand {
+      display:flex;
+      align-items:center;
+      gap:12px;
+      margin-bottom:10px;
+    }
+    .logo {
+      width:48px;height:48px;border-radius:10px;
+      background: linear-gradient(135deg,var(--lavender-300),var(--lavender-400));
+      display:flex;align-items:center;justify-content:center;
+      color:white;font-weight:700;font-family:"Playfair Display",serif;
+      box-shadow: inset 0 -6px 12px rgba(0,0,0,0.06);
+    }
+    .brand h1{
+      margin:0;font-size:18px;
+      font-family:"Playfair Display",serif;
+      color:#4a2953;
+    }
+    .brand p{margin:0;font-size:12px;color:var(--muted);}
+
+    .nav {
+      margin-top:12px;
+      display:flex;flex-direction:column;gap:8px;
+    }
+    .nav button {
+      display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;
+      border: none;background:transparent;cursor:pointer;
+      font-weight:500;color:#412141;
+    }
+    .nav button.active, .nav button:hover {
+      background: linear-gradient(90deg, rgba(212,175,55,0.12), rgba(255,120,166,0.03));
+      box-shadow: 0 6px 16px rgba(180,130,50,0.06);
+    }
+
+    .login-area {
+      margin-top:18px;padding-top:10px;border-top:1px dashed rgba(0,0,0,0.05);
+      display:flex;flex-direction:column;gap:8px;
+    }
+    .btn {
+      background: linear-gradient(90deg,var(--lavender-300),var(--lavender-400));
+      border:none;color:white;padding:10px 14px;border-radius:12px;cursor:pointer;
+      font-weight:600;box-shadow: 0 6px 18px rgba(150,90,150,0.12);
+    }
+    .btn.secondary {
+      background:transparent;border:1px solid rgba(100,0,100,0.06);color:#412141;
+    }
+
+    /* Main area */
+    .main {
+      min-height:80vh;
+    }
+    .card {
+      background: white;border-radius: var(--radius);padding:18px;box-shadow: var(--shadow);
+      margin-bottom:18px;
+    }
+    .topbar {
+      display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px;
+    }
+    .greeting {
+      display:flex;flex-direction:column;
+    }
+    .greeting h2 { margin:0; font-family:"Playfair Display", serif; color:#513058;}
+    .greeting p { margin:0;color:var(--muted);font-size:13px; }
+
+    /* dashboard layout */
+    .dash-grid {
+      display:grid;grid-template-columns: 1fr 360px;gap:18px;
+    }
+
+    /* checklist */
+    .checklist {
+      display:flex;flex-direction:column;gap:8px;
+    }
+    .checklist .item {
+      display:flex;align-items:center;justify-content:space-between;padding:10px;border-radius:10px;
+      border:1px solid rgba(200,160,200,0.12);
+    }
+    .checklist .item label {display:flex;gap:10px;align-items:center;}
+    .checklist input[type="checkbox"]{width:18px;height:18px;border-radius:4px;}
+
+    .progress-circle {
+      width:120px;height:120px;border-radius:999px;display:flex;align-items:center;justify-content:center;
+      background:conic-gradient(var(--lavender-300) 0% , rgba(0,0,0,0.06) 0%);
+    }
+    .progress-circle small{display:block;text-align:center;font-weight:700;color:#6d2f66;}
+
+    /* right column summary */
+    .summary .mini {
+      display:flex;gap:12px;align-items:center;
+    }
+    .bubbles {display:flex;gap:8px;flex-wrap:wrap;}
+    .bubble {width:36px;height:36px;border-radius:10px;background:var(--lavender-100);display:flex;align-items:center;justify-content:center;color:#6d2f66;font-weight:700;}
+
+    /* recipes list */
+    .recipes-grid {
+      display:grid;grid-template-columns: repeat(auto-fit,minmax(200px,1fr));gap:12px;
+    }
+    .recipe {
+      border-radius:12px;overflow:hidden;border:1px solid rgba(0,0,0,0.04);background:linear-gradient(180deg,#fff,#f8f4fb);
+      display:flex;flex-direction:column;
+    }
+    .recipe img{width:100%;height:120px;object-fit:cover;}
+    .recipe .body{padding:10px;display:flex;flex-direction:column;gap:8px;}
+    .chips {display:flex;gap:8px;flex-wrap:wrap;}
+    .chip {font-size:12px;padding:6px 8px;border-radius:999px;background:rgba(196,150,200,0.14);color:#5d2f55;}
+
+    /* community (chat) */
+    .chat {
+      height:320px;border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:10px;border:1px solid rgba(0,0,0,0.04);
+    }
+    .messages {flex:1;overflow:auto;display:flex;flex-direction:column;gap:8px;}
+    .msg {max-width:75%;padding:8px 10px;border-radius:12px;background:var(--lavender-100);align-self:flex-start;}
+    .msg.me {background:linear-gradient(90deg,var(--lavender-300),var(--lavender-400));color:white;align-self:flex-end;}
+
+    .chat input {padding:10px;border-radius:10px;border:1px solid rgba(0,0,0,0.06);width:100%;}
+
+    /* timer/foco */
+    .timer {
+      display:flex;flex-direction:column;align-items:center;gap:8px;
+    }
+    .timer .big {font-size:28px;font-weight:700;color:#4a2953;}
+
+    /* treino list */
+    .workouts {display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;}
+    .workout {padding:12px;border-radius:12px;border:1px solid rgba(0,0,0,0.04);background:#fff;display:flex;flex-direction:column;gap:8px;}
+    .workout .meta {font-size:12px;color:var(--muted);}
+
+    /* progresso chart */
+    .chart-box {height:260px;}
+
+    /* VIP / premium locked */
+    .locked {
+      border:2px dashed rgba(212,175,55,0.18);
+      padding:12px;border-radius:12px;background:linear-gradient(180deg, rgba(212,175,55,0.04), rgba(255,255,255,0.02));
+    }
+    .vip-badge {display:inline-block;padding:6px 10px;border-radius:999px;background:var(--gold);color:white;font-weight:700;font-size:12px;}
+
+    /* responsive */
+    @media (max-width:980px){
+      .app {grid-template-columns:1fr; padding:12px;}
+      .dash-grid {grid-template-columns:1fr;}
+      .sidebar {position:static;}
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo">FC</div>
+        <div>
+          <h1>Fit & Chic</h1>
+          <p>Organize. Treine. Brilhe.</p>
+        </div>
+      </div>
+
+      <nav class="nav" id="nav">
+        <button class="nav-btn active" data-tab="dashboard">Dashboard</button>
+        <button class="nav-btn" data-tab="receitas">Receitas Fit</button>
+        <button class="nav-btn" data-tab="comunidade">Comunidade</button>
+        <button class="nav-btn" data-tab="foco">Foco</button>
+        <button class="nav-btn" data-tab="treinos">Treinos & Evolução</button>
+        <button class="nav-btn" data-tab="progresso">Progresso</button>
+        <button class="nav-btn" data-tab="autocuidado">Autocuidado</button>
+        <button class="nav-btn" data-tab="vip">Clube VIP</button>
+      </nav>
+
+      <div class="login-area" id="login-area">
+        <div id="user-info">
+          <small id="welcome-text">Entrar para acessar recursos VIP</small>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn" id="btn-login">Login / Criar conta</button>
+          <button class="btn secondary" id="btn-logout" style="display:none;">Logout</button>
+        </div>
+        <small style="display:block;margin-top:8px;color:var(--muted);font-size:12px;">
+          * Assinatura Premium ativa libera chat com Nutri/Personal.
+        </small>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+      <!-- TOP -->
+      <section class="card topbar">
+        <div class="greeting">
+          <h2 id="greet-title">Olá, diva ✨</h2>
+          <p id="greet-sub">Organize seu dia com estilo — hoje é um ótimo dia pra brilhar!</p>
+        </div>
+        <div style="display:flex;gap:12px;align-items:center;">
+          <div class="vip-badge" id="vip-badge" style="display:none;">VIP</div>
+          <button class="btn" id="add-quick">+ Adicionar rápido</button>
+        </div>
+      </section>
+
+      <!-- DASHBOARD (container de abas) -->
+      <section id="tabs-container">
+
+        <!-- Dashboard -->
+        <div class="card" data-tab-content="dashboard">
+          <div class="dash-grid">
+            <div>
+              <h3 style="margin-top:0;font-family:'Playfair Display',serif;color:#4a2953;">Dashboard</h3>
+
+              <div class="card checklist">
+                <h4 style="margin:0 0 8px 0;">Checklists do dia</h4>
+                <div id="checklist-items" class="checklist">
+                  <!-- itens via JS -->
+                </div>
+                <div style="margin-top:10px;display:flex;gap:8px;">
+                  <input id="new-check-text" placeholder="Adicionar tarefa rápida..." style="flex:1;padding:10px;border-radius:10px;border:1px solid rgba(0,0,0,0.06);" />
+                  <button class="btn secondary" id="add-check">Adicionar</button>
+                </div>
+              </div>
+
+              <div style="display:flex;gap:12px;margin-top:12px;">
+                <div class="card" style="flex:1;">
+                  <h4 style="margin:0 0 8px 0;">Treino do dia</h4>
+                  <div class="workouts" id="today-workouts">
+                    <!-- JS -->
+                  </div>
+                </div>
+
+                <div class="card" style="width:220px;">
+                  <h4 style="margin:0 0 8px 0;">Receita sugerida</h4>
+                  <div id="featured-recipe">
+                    <!-- JS -->
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <div class="summary">
+              <div class="card" style="text-align:center;">
+                <h4 style="margin:0 0 8px 0;">Progresso diário</h4>
+                <div class="progress-circle" id="daily-progress" data-progress="0">
+                  <small><span id="progress-num">0</span>%<br/><small style="font-weight:600;color:var(--muted);font-size:11px">completo</small></small>
+                </div>
+              </div>
+
+              <div class="card">
+                <h4 style="margin:0 0 8px 0;">Hidratação</h4>
+                <div class="bubbles" id="water-bubbles">
+                  <!-- JS -->
+                </div>
+              </div>
+
+              <div class="card">
+                <h4 style="margin:0 0 8px 0;">Mini chat</h4>
+                <div class="chat" id="mini-chat">
+                  <div class="messages" id="mini-messages"></div>
+                  <div style="display:flex;gap:8px;">
+                    <input id="mini-input" placeholder="Diz algo motivador..." />
+                    <button class="btn" id="mini-send">Enviar</button>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- Receitas -->
+        <div class="card" data-tab-content="receitas" style="display:none;">
+          <h3 style="font-family:'Playfair Display',serif;color:#4a2953;margin-top:0;">Receitas Fit</h3>
+          <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px;">
+            <select id="filter-recipe" style="padding:8px;border-radius:10px;border:1px solid rgba(0,0,0,0.06);">
+              <option value="all">Todas</option>
+              <option value="lowcarb">Low Carb</option>
+              <option value="protein">High Protein</option>
+              <option value="vegan">Veggie / Vegan</option>
+              <option value="pre">Pré-treino</option>
+              <option value="post">Pós-treino</option>
+            </select>
+            <input id="search-recipe" placeholder="Buscar receita..." style="flex:1;padding:8px;border-radius:10px;border:1px solid rgba(0,0,0,0.06);" />
+            <button class="btn" id="btn-new-recipe">+ Nova receita</button>
+          </div>
+
+          <div class="recipes-grid" id="recipes-grid">
+            <!-- JS popula -->
+          </div>
+        </div>
+
+        <!-- Comunidade -->
+        <div class="card" data-tab-content="comunidade" style="display:none;">
+          <h3 style="margin-top:0;font-family:'Playfair Display',serif;color:#4a2953;">Comunidade</h3>
+          <div style="display:flex;gap:12px;">
+            <div style="flex:1;">
+              <div style="margin-bottom:8px;">
+                <strong>Grupos</strong>
+                <div style="display:flex;gap:8px;margin-top:6px;">
+                  <button class="btn secondary" data-group="glow">Glow Girls</button>
+                  <button class="btn secondary" data-group="lowcarb">Low Carb Lovers</button>
+                  <button class="btn secondary" data-group="yoga">Yoga & Zen</button>
+                  <button class="btn secondary" data-group="fitdance">FitDance</button>
+                </div>
+              </div>
+
+              <div class="card chat" style="height:420px;">
+                <div class="messages" id="comm-messages"></div>
+                <div style="display:flex;gap:8px;">
+                  <input id="comm-input" placeholder="Escreva para o grupo..." />
+                  <button class="btn" id="comm-send">Enviar</button>
+                </div>
+              </div>
+            </div>
+
+            <div style="width:320px;">
+              <div class="card">
+                <h4>Feed de conquistas</h4>
+                <ul id="feed" style="padding-left:18px;margin:0;color:var(--muted)"></ul>
+              </div>
+
+              <div class="card">
+                <h4>Top membros</h4>
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                  <div class="mini">1. Sophia (VIP)</div>
+                  <div class="mini">2. Lara</div>
+                  <div class="mini">3. Marina</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Foco -->
+        <div class="card" data-tab-content="foco" style="display:none;">
+          <h3 style="margin-top:0;font-family:'Playfair Display',serif;color:#4a2953;">Foco</h3>
+          <div style="display:flex;gap:12px;align-items:flex-start;">
+            <div style="flex:1;">
+              <div class="card timer">
+                <div class="big" id="timer-display">25:00</div>
+                <div style="display:flex;gap:8px;">
+                  <button class="btn" id="timer-start">Iniciar</button>
+                  <button class="btn secondary" id="timer-stop">Parar</button>
+                  <button class="btn secondary" id="timer-reset">Reset</button>
+                </div>
+                <small style="color:var(--muted);margin-top:8px;">Modo Pomodoro fit: 25 min treino / 5 min descanso</small>
+              </div>
+
+              <div class="card" style="margin-top:12px;">
+                <h4>Playlists</h4>
+                <div style="display:flex;gap:8px;flex-direction:column;">
+                  <div>Pop Chic — 45 min</div>
+                  <div>Yoga Zen — 20 min</div>
+                  <div>FitDance Pump — 30 min</div>
+                </div>
+              </div>
+            </div>
+
+            <div style="width:320px;">
+              <div class="card">
+                <h4>Modo sem distrações</h4>
+                <p style="color:var(--muted);margin:6px 0;">Ative para bloquear notificações e manter foco</p>
+                <label style="display:flex;align-items:center;gap:8px;">
+                  <input type="checkbox" id="no-dist" />
+                  <span>Ativar</span>
+                </label>
+              </div>
+
+              <div class="card">
+                <h4>Motivação</h4>
+                <p id="motivation-text" style="color:#6d2f66;font-weight:600;">Você tá pronta pra arrasar hoje, diva ✨</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Treinos & Evolução -->
+        <div class="card" data-tab-content="treinos" style="display:none;">
+          <h3 style="margin-top:0;font-family:'Playfair Display',serif;color:#4a2953;">Treinos & Evolução</h3>
+          <div style="display:flex;gap:12px;">
+            <div style="flex:1;">
+              <div style="display:flex;gap:12px;margin-bottom:12px;">
+                <button class="btn" data-work="funcional">Funcional</button>
+                <button class="btn" data-work="yoga">Yoga</button>
+                <button class="btn" data-work="fitdance">FitDance</button>
+                <button class="btn" data-work="hiit">HIIT</button>
+              </div>
+
+              <div id="workouts-list" class="workouts">
+                <!-- JS -->
+              </div>
+            </div>
+
+            <div style="width:340px;">
+              <div class="card">
+                <h4>Evolução de cargas</h4>
+                <div class="chart-box"><canvas id="chart-carga"></canvas></div>
+                <div style="display:flex;gap:8px;margin-top:8px;">
+                  <input id="exercise-name" placeholder="Ex: Agachamento" style="flex:1;padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06);" />
+                  <input id="exercise-weight" placeholder="kg" style="width:80px;padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06);" />
+                  <button class="btn" id="add-carga">Registrar</button>
+                </div>
+              </div>
+
+              <div class="card" style="margin-top:12px;">
+                <h4>Programs</h4>
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                  <div class="locked">Glow Up 30 dias (Premium)</div>
+                  <div class="locked">Projeto Corpo de Verão (Premium)</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Progresso -->
+        <div class="card" data-tab-content="progresso" style="display:none;">
+          <h3 style="margin-top:0;font-family:'Playfair Display',serif;color:#4a2953;">Progresso</h3>
+          <div style="display:flex;gap:12px;">
+            <div style="flex:1;">
+              <div class="card">
+                <h4>Medidas</h4>
+                <div style="display:flex;gap:12px;">
+                  <div style="flex:1;">
+                    <label>Peso (kg)</label>
+                    <input id="input-peso" type="number" style="width:100%;padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06);" />
+                  </div>
+                  <div style="flex:1;">
+                    <label>Cintura (cm)</label>
+                    <input id="input-cint" type="number" style="width:100%;padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06);" />
+                  </div>
+                </div>
+                <div style="margin-top:8px;"><button class="btn" id="save-medidas">Salvar</button></div>
+              </div>
+
+              <div class="card" style="margin-top:12px;">
+                <h4>Fotos de progresso</h4>
+                <p style="color:var(--muted);margin:6px 0;">(Mockup) Faça upload para comparar antes/depois</p>
+                <input type="file" id="upload-photo" />
+              </div>
+            </div>
+
+            <div style="width:360px;">
+              <div class="card">
+                <h4>Gráfico de Peso</h4>
+                <div style="height:220px;"><canvas id="chart-peso"></canvas></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Autocuidado -->
+        <div class="card" data-tab-content="autocuidado" style="display:none;">
+          <h3 style="margin-top:0;font-family:'Playfair Display',serif;color:#4a2953;">Autocuidado & Zen</h3>
+          <div style="display:flex;gap:12px;">
+            <div style="flex:1;">
+              <div class="card">
+                <h4>Meditações</h4>
+                <ul>
+                  <li>Respiração 5 minutos</li>
+                  <li>Relax pós-treino — 10 minutos</li>
+                  <li>Sono Tranquilo — 15 minutos</li>
+                </ul>
+              </div>
+
+              <div class="card" style="margin-top:12px;">
+                <h4>Skincare</h4>
+                <ol>
+                  <li>Double cleanse</li>
+                  <li>Hidratar (face + pescoço)</li>
+                  <li>Máscara noturna (1x por semana)</li>
+                </ol>
+              </div>
+            </div>
+
+            <div style="width:320px;">
+              <div class="card">
+                <h4>Yoga Rápida</h4>
+                <p style="color:var(--muted);">Sequência de 10 min para alongar antes do treino.</p>
+                <button class="btn">Iniciar Yoga</button>
+              </div>
+
+              <div class="card" style="margin-top:12px;">
+                <h4>Checklists</h4>
+                <div id="selfcare-checklist" class="checklist"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- VIP -->
+        <div class="card" data-tab-content="vip" style="display:none;">
+          <h3 style="margin-top:0;font-family:'Playfair Display',serif;color:#4a2953;">Clube VIP — Chic Concierge</h3>
+          <div style="display:flex;gap:12px;">
+            <div style="flex:1;">
+              <div class="card">
+                <h4>Chat com Profissionais</h4>
+                <p style="color:var(--muted);margin:6px 0;">Apenas para assinantes premium. Converse com nutricionistas, personal e instrutoras.</p>
+                <div id="pro-chat" class="chat" style="height:300px;">
+                  <div class="messages" id="pro-messages"></div>
+                  <div style="display:flex;gap:8px;">
+                    <input id="pro-input" placeholder="Pergunte à sua Nutri..." />
+                    <button class="btn" id="pro-send">Enviar</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card" style="margin-top:12px;">
+                <h4>Agendar sessão</h4>
+                <div style="display:flex;gap:8px;">
+                  <select id="pro-type" style="padding:8px;border-radius:8px;">
+                    <option value="nutri">Nutricionista</option>
+                    <option value="personal">Personal</option>
+                    <option value="yoga">Instrutora Yoga</option>
+                  </select>
+                  <input type="datetime-local" id="pro-date" style="padding:8px;border-radius:8px;" />
+                  <button class="btn" id="book-pro">Agendar</button>
+                </div>
+              </div>
+            </div>
+
+            <div style="width:320px;">
+              <div class="card locked">
+                <h4>Benefícios VIP</h4>
+                <ul style="color:var(--muted);margin:6px 0;">
+                  <li>Consultas por chat</li>
+                  <li>Planos personalizados</li>
+                  <li>Lives semanais</li>
+                </ul>
+                <div style="margin-top:8px;">
+                  <button class="btn" id="become-vip">Assinar Premium</button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+      </section>
+    </main>
+  </div>
+
+  <!-- LOGIN MODAL (simples) -->
+  <div id="modal-login" style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.35);z-index:50;">
+    <div style="width:360px;background:white;border-radius:16px;padding:18px;box-shadow:0 18px 40px rgba(0,0,0,0.25);">
+      <h3 style="margin-top:0;font-family:'Playfair Display',serif;color:#4a2953;">Entrar / Criar conta</h3>
+      <p style="color:var(--muted);margin-top:0;">Faça login para salvar progresso e acessar o Clube VIP.</p>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">
+        <input id="login-name" placeholder="Nome" style="padding:10px;border-radius:8px;border:1px solid rgba(0,0,0,0.06);" />
+        <input id="login-email" placeholder="E-mail" style="padding:10px;border-radius:8px;border:1px solid rgba(0,0,0,0.06);" />
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:6px;">
+          <button class="btn secondary" id="close-login">Fechar</button>
+          <button class="btn" id="do-login">Entrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* -------------------- Dados iniciais (mock) -------------------- */
+    const mockRecipes = [
+      { id:1, title:'Bowl Rosa Proteico', tags:['protein','post'], time:10, img:'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=60' },
+      { id:2, title:'Salada Low Carb Glam', tags:['lowcarb','vegan'], time:12, img:'https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&w=800&q=60' },
+      { id:3, title:'Smoothie Pré-treino', tags:['pre','vegan'], time:5, img:'https://images.unsplash.com/photo-1497534446932-c925b458314e?auto=format&fit=crop&w=800&q=60' },
+      { id:4, title:'Brownie de Batata Doce', tags:['post','dessert'], time:20, img:'https://images.unsplash.com/photo-1604908177522-4ec9de4ec77b?auto=format&fit=crop&w=800&q=60' },
+    ];
+
+    const mockWorkouts = [
+      { id:'w1', title:'HIIT Blush — 20 min', type:'hiit', duration:20, exercises:['Jumping Jacks','Burpees','Mountain Climbers'] },
+      { id:'w2', title:'Tonificação Pernas', type:'funcional', duration:30, exercises:['Agachamento','Afundo','Ponte de Glúteo'] },
+      { id:'w3', title:'Yoga Flow — 15 min', type:'yoga', duration:15, exercises:['Saudação ao Sol','Postura da Criança','Prancha'] },
+      { id:'w4', title:'FitDance Pump', type:'fitdance', duration:25, exercises:['Aquecimento','Coreografia 1','Coreografia 2'] },
+    ];
+
+    /* -------------------- utilidades -------------------- */
+    const $ = sel => document.querySelector(sel);
+    const $$ = sel => Array.from(document.querySelectorAll(sel));
+
+    /* -------------------- Navegação de abas -------------------- */
+    const navBtns = $$('.nav-btn');
+    const tabContents = $$('[data-tab-content]').reduce((acc,el)=>{ acc[el.getAttribute('data-tab-content')] = el; return acc; },{});
+    navBtns.forEach(b=>{
+      b.addEventListener('click', ()=> {
+        navBtns.forEach(x=>x.classList.remove('active'));
+        b.classList.add('active');
+        Object.values(tabContents).forEach(el=>el.style.display='none');
+        tabContents[b.dataset.tab].style.display='block';
+      });
+    });
+
+    /* -------------------- Login (localStorage mock) -------------------- */
+    const modal = $('#modal-login');
+    const btnLogin = $('#btn-login');
+    const closeLogin = $('#close-login');
+    const doLogin = $('#do-login');
+    const btnLogout = $('#btn-logout');
+    const welcomeText = $('#welcome-text');
+    const vipBadge = $('#vip-badge');
+
+    function setUser(user){
+      localStorage.setItem('fit_user', JSON.stringify(user));
+      renderUser();
+    }
+    function getUser(){ return JSON.parse(localStorage.getItem('fit_user') || 'null'); }
+    function logout(){
+      localStorage.removeItem('fit_user');
+      renderUser();
+    }
+
+    function renderUser(){
+      const u = getUser();
+      if(u){
+        welcomeText.innerText = `Olá, ${u.name}!`;
+        btnLogin.style.display='none';
+        btnLogout.style.display='inline-block';
+        if(u.isVip) vipBadge.style.display='inline-block'; else vipBadge.style.display='none';
+        $('#greet-title').innerText = `Olá, ${u.name} ✨`;
+      } else {
+        welcomeText.innerText = 'Entrar para acessar recursos VIP';
+        btnLogin.style.display='inline-block';
+        btnLogout.style.display='none';
+        vipBadge.style.display='none';
+        $('#greet-title').innerText = `Olá, diva ✨`;
+      }
+    }
+
+    btnLogin.addEventListener('click', ()=> modal.style.display='flex');
+    closeLogin.addEventListener('click', ()=> modal.style.display='none');
+    doLogin.addEventListener('click', ()=>{
+      const name = $('#login-name').value.trim();
+      const email = $('#login-email').value.trim();
+      if(!name||!email){ alert('Preencha nome e e-mail.'); return; }
+      // simples: primeira vez ganha VIP mock? não — apenas mock
+      setUser({ name, email, isVip:false });
+      modal.style.display='none';
+    });
+    btnLogout.addEventListener('click', ()=>{ if(confirm('Deseja sair?')) logout(); });
+
+    /* -------------------- Checklist do dia -------------------- */
+    const defaultChecks = [
+      'Aquecimento 5 min',
+      'Treino do dia',
+      '500ml água (manhã)',
+      'Refeição proteína',
+      'Skincare noturno'
+    ];
+    function loadChecks(){
+      const saved = JSON.parse(localStorage.getItem('fit_checks') || 'null');
+      return saved || defaultChecks.map(t=>({ text:t, done:false }));
+    }
+    function saveChecks(arr){ localStorage.setItem('fit_checks', JSON.stringify(arr)); }
+    function renderChecks(){
+      const list = loadChecks();
+      const $cont = $('#checklist-items');
+      $cont.innerHTML='';
+      list.forEach((it, idx)=>{
+        const div = document.createElement('div');
+        div.className='item';
+        div.innerHTML = `<label><input type="checkbox" ${it.done? 'checked':''} data-idx="${idx}" /> <span>${it.text}</span></label>
+          <div style="display:flex;gap:8px;"><button class="btn secondary" data-del="${idx}">Excluir</button></div>`;
+        $cont.appendChild(div);
+      });
+      // ligar eventos
+      $cont.querySelectorAll('input[type=checkbox]').forEach(cb=>{
+        cb.addEventListener('change', e=>{
+          const idx = +e.target.dataset.idx;
+          const arr = loadChecks();
+          arr[idx].done = e.target.checked;
+          saveChecks(arr);
+          updateProgress();
+        });
+      });
+      $cont.querySelectorAll('[data-del]').forEach(btn=>{
+        btn.addEventListener('click', e=>{
+          const idx = +e.target.dataset.del;
+          const arr = loadChecks();
+          arr.splice(idx,1);
+          saveChecks(arr);
+          renderChecks();
+          updateProgress();
+        });
+      });
+    }
+    $('#add-check').addEventListener('click', ()=>{
+      const txt = $('#new-check-text').value.trim();
+      if(!txt) return;
+      const arr = loadChecks();
+      arr.push({ text: txt, done:false });
+      saveChecks(arr);
+      $('#new-check-text').value='';
+      renderChecks();
+      updateProgress();
+    });
+
+    /* -------------------- progress circle e agua -------------------- */
+    function updateProgress(){
+      const arr = loadChecks();
+      const done = arr.filter(x=>x.done).length;
+      const perc = Math.round((done / (arr.length || 1)) * 100);
+      $('#progress-num').innerText = perc;
+      const el = $('#daily-progress');
+      el.style.background = `conic-gradient(var(--lavender-300) ${perc}%, rgba(0,0,0,0.06) ${perc}%)`;
+    }
+    function renderWater(){
+      const container = $('#water-bubbles');
+      container.innerHTML='';
+      for(let i=0;i<8;i++){
+        const div=document.createElement('div');
+        div.className='bubble';
+        div.dataset.idx=i;
+        div.innerText = '💧';
+        div.addEventListener('click', ()=>{
+          div.style.opacity = div.style.opacity === '0.4' ? '1' : '0.4';
+        });
+        container.appendChild(div);
+      }
+    }
+
+    /* -------------------- Mini chat (motivation) -------------------- */
+    const miniMessages = [
+      {text:'Bora treinar hoje? ✨', who:'bot'},
+      {text:'Eu já tô pronta 💪', who:'me'},
+    ];
+    function renderMiniMessages(){
+      const box = $('#mini-messages'); box.innerHTML='';
+      miniMessages.forEach(m=>{
+        const d = document.createElement('div');
+        d.className = 'msg ' + (m.who==='me' ? 'me' : '');
+        d.innerText = m.text;
+        box.appendChild(d);
+      });
+      box.scrollTop = box.scrollHeight;
+    }
+    $('#mini-send').addEventListener('click', ()=>{
+      const t = $('#mini-input').value.trim();
+      if(!t) return;
+      miniMessages.push({text:t, who:'me'});
+      $('#mini-input').value='';
+      renderMiniMessages();
+    });
+
+    /* -------------------- Receitas -------------------- */
+    function renderRecipes(filter='all', q=''){
+      const grid = $('#recipes-grid'); grid.innerHTML='';
+      const userRecipes = JSON.parse(localStorage.getItem('fit_recipes') || 'null') || mockRecipes;
+      const arr = userRecipes.filter(r=>{
+        const okFilter = filter==='all' ? true : r.tags.includes(filter);
+        const okQuery = !q ? true : r.title.toLowerCase().includes(q.toLowerCase());
+        return okFilter && okQuery;
+      });
+      arr.forEach(r=>{
+        const card = document.createElement('div'); card.className='recipe';
+        card.innerHTML = `<img src="${r.img}" alt="${r.title}"><div class="body">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <strong>${r.title}</strong>
+            <span style="font-size:12px;color:var(--muted)">${r.time} min</span>
+          </div>
+          <div class="chips">${r.tags.map(t=>`<span class="chip">${t}</span>`).join('')}</div>
+          <div style="display:flex;gap:8px;margin-top:8px;">
+            <button class="btn add-to-plan" data-id="${r.id}">Adicionar ao plano</button>
+            <button class="btn secondary view-recipe" data-id="${r.id}">Ver</button>
+          </div>
+        </div>`;
+        grid.appendChild(card);
+      });
+
+      // events
+      $$('.add-to-plan').forEach(b=>b.addEventListener('click', e=>{
+        const id = +e.target.dataset.id;
+        const r = (JSON.parse(localStorage.getItem('fit_recipes')||'null') || mockRecipes).find(x=>x.id===id);
+        if(!r) return;
+        const arr = JSON.parse(localStorage.getItem('fit_myplan')||'[]');
+        arr.push(r);
+        localStorage.setItem('fit_myplan', JSON.stringify(arr));
+        alert(`Receita "${r.title}" adicionada ao seu plano!`);
+      }));
+    }
+    $('#filter-recipe').addEventListener('change', e=> renderRecipes(e.target.value, $('#search-recipe').value));
+    $('#search-recipe').addEventListener('input', e=> renderRecipes($('#filter-recipe').value, e.target.value));
+    $('#btn-new-recipe').addEventListener('click', ()=>{
+      const title = prompt('Nome da receita:');
+      if(!title) return;
+      const tag = prompt('Tags (separe por vírgula):','protein');
+      const time = prompt('Tempo (min):','10');
+      const img = 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=60';
+      const arr = JSON.parse(localStorage.getItem('fit_recipes')||'null') || mockRecipes;
+      const id = Math.floor(Math.random()*100000);
+      arr.push({id, title, tags: (tag||'').split(',').map(s=>s.trim()), time: parseInt(time) || 10, img});
+      localStorage.setItem('fit_recipes', JSON.stringify(arr));
+      renderRecipes($('#filter-recipe').value, $('#search-recipe').value);
+    });
+
+    /* featured recipe */
+    function renderFeatured(){
+      const f = (JSON.parse(localStorage.getItem('fit_recipes')||'null') || mockRecipes)[0];
+      $('#featured-recipe').innerHTML = `<img src="${f.img}" style="width:100%;height:100px;object-fit:cover;border-radius:8px;" /><div style="margin-top:8px;"><strong>${f.title}</strong><div style="color:var(--muted);font-size:13px;">${f.time} min • ${f.tags.join(', ')}</div></div>`;
+    }
+
+    /* -------------------- Comunidade chat (simulado) -------------------- */
+    let commMessages = [
+      {text:'Bem-vinda ao Glow Girls! Compartilha seu look de treino 💖','who':'system'},
+      {text:'Hoje fiz HIIT e me senti ótima!','who':'Lara'}
+    ];
+    function renderComm(){
+      const box = $('#comm-messages'); box.innerHTML='';
+      commMessages.forEach(m=>{
+        const d = document.createElement('div'); d.className='msg'; d.style.background='#fff6fb';
+        d.innerHTML = `<strong style="font-size:12px;">${m.who}</strong><div style="font-size:14px;">${m.text}</div>`;
+        box.appendChild(d);
+      });
+      box.scrollTop = box.scrollHeight;
+    }
+    $('#comm-send').addEventListener('click', ()=> {
+      const text = $('#comm-input').value.trim();
+      if(!text) return;
+      const user = getUser(); const name = user ? user.name : 'Anon';
+      commMessages.push({text, who:name});
+      $('#comm-input').value='';
+      renderComm();
+      // adiciona feed
+      const feed = $('#feed'); const li = document.createElement('li'); li.innerText = `${name}: ${text}`; feed.prepend(li);
+    });
+
+    /* -------------------- Foco: timer -------------------- */
+    let timerInterval=null; let timerSeconds=25*60;
+    function formatTime(s){ const m=Math.floor(s/60); const ss=s%60; return `${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`; }
+    $('#timer-start').addEventListener('click', ()=> {
+      if(timerInterval) return;
+      timerInterval = setInterval(()=> {
+        if(timerSeconds<=0){ clearInterval(timerInterval); timerInterval=null; timerSeconds=25*60; $('#motivation-text').innerText = 'Pausa! Respira e volta com tudo ✨'; return; }
+        timerSeconds--;
+        $('#timer-display').innerText = formatTime(timerSeconds);
+      }, 1000);
+    });
+    $('#timer-stop').addEventListener('click', ()=> { clearInterval(timerInterval); timerInterval=null; });
+    $('#timer-reset').addEventListener('click', ()=> { clearInterval(timerInterval); timerInterval=null; timerSeconds=25*60; $('#timer-display').innerText = '25:00'; });
+
+    /* -------------------- Treinos list e evolução de cargas -------------------- */
+    function renderWorkouts(filter='all'){
+      const container = $('#workouts-list'); container.innerHTML='';
+      mockWorkouts.filter(w => filter==='all' ? true : w.type===filter).forEach(w=>{
+        const div=document.createElement('div'); div.className='workout';
+        div.innerHTML = `<strong>${w.title}</strong><div class="meta">${w.duration} min • ${w.type}</div>
+          <div style="font-size:13px;color:var(--muted)">${w.exercises.join(' • ')}</div>
+          <div style="display:flex;gap:8px;margin-top:8px;"><button class="btn start-work" data-id="${w.id}">Iniciar</button><button class="btn secondary add-fav" data-id="${w.id}">Favoritar</button></div>`;
+        container.appendChild(div);
+      });
+      $$('.start-work').forEach(b=>b.addEventListener('click', e=>{
+        alert('Iniciando treino — uso de cronômetro simples (mock).');
+      }));
+    }
+
+    // gráfico de cargas (Chart.js)
+    let chartCarga = null;
+    function loadCargaData(){
+      return JSON.parse(localStorage.getItem('fit_cargas') || '{}');
+    }
+    function saveCargaData(d){ localStorage.setItem('fit_cargas', JSON.stringify(d)); }
+    function renderChartCarga(){
+      const data = loadCargaData();
+      const labels = []; const datasets = [];
+      // cada exercício é uma linha
+      Object.keys(data).forEach(ex=>{
+        labels.push(ex);
+      });
+      // we'll show last value per exercise
+      const values = Object.keys(data).map(ex => {
+        const arr = data[ex] || [];
+        return arr.length ? arr[arr.length-1].v : 0;
+      });
+      const ctx = document.getElementById('chart-carga').getContext('2d');
+      if(chartCarga) chartCarga.destroy();
+      chartCarga = new Chart(ctx, {
+        type: 'bar',
+        data:{
+          labels: Object.keys(data).length ? Object.keys(data) : ['Nenhum'],
+          datasets:[{label:'kg', data: values, backgroundColor:'rgba(200,140,200,0.7)'}]
+        },
+        options:{responsive:true,plugins:{legend:{display:false}}}
+      });
+    }
+    $('#add-carga').addEventListener('click', ()=>{
+      const name = $('#exercise-name').value.trim();
+      const kg = parseFloat($('#exercise-weight').value);
+      if(!name || !kg){ alert('Preencha exercício e kg.'); return; }
+      const data = loadCargaData();
+      if(!data[name]) data[name]=[];
+      data[name].push({t: new Date().toISOString(), v: kg});
+      saveCargaData(data);
+      $('#exercise-name').value=''; $('#exercise-weight').value='';
+      renderChartCarga();
+      alert('Carga registrada ✅');
+    });
+
+    /* -------------------- Progresso (peso) gráfico -------------------- */
+    let chartPeso=null;
+    function loadPesoData(){ return JSON.parse(localStorage.getItem('fit_peso') || '[]'); }
+    function savePesoData(arr){ localStorage.setItem('fit_peso', JSON.stringify(arr)); }
+    $('#save-medidas').addEventListener('click', ()=>{
+      const peso = parseFloat($('#input-peso').value);
+      if(isNaN(peso)){ alert('Insira um peso válido'); return; }
+      const arr = loadPesoData();
+      arr.push({t: new Date().toISOString(), peso});
+      savePesoData(arr);
+      renderChartPeso();
+      alert('Medida salva!');
+    });
+    function renderChartPeso(){
+      const arr = loadPesoData();
+      const labels = arr.map(a => new Date(a.t).toLocaleDateString());
+      const data = arr.map(a => a.peso);
+      const ctx = document.getElementById('chart-peso').getContext('2d');
+      if(chartPeso) chartPeso.destroy();
+      chartPeso = new Chart(ctx, {
+        type:'line',
+        data:{labels, datasets:[{label:'Peso (kg)', data, tension:0.3, borderColor:'#b77fb4', backgroundColor:'rgba(183,127,180,0.12)'}]},
+        options:{plugins:{legend:{display:false}}}
+      });
+    }
+
+    /* -------------------- VIP chat mock (apenas se isVip true) -------------------- */
+    function renderProMessages(){
+      const box = $('#pro-messages'); box.innerHTML='';
+      const arr = JSON.parse(localStorage.getItem('fit_pro_messages') || '[]');
+      if(arr.length===0){
+        box.innerHTML = '<div style="color:var(--muted);">Nenhuma conversa ainda. Pergunte algo à sua Nutri!</div>';
+        return;
+      }
+      arr.forEach(m=>{
+        const d = document.createElement('div'); d.className = 'msg ' + (m.who==='me' ? 'me' : '');
+        d.innerText = m.text;
+        box.appendChild(d);
+      });
+      box.scrollTop = box.scrollHeight;
+    }
+    $('#pro-send').addEventListener('click', ()=>{
+      const u = getUser();
+      if(!u || !u.isVip){ alert('Recurso Premium — seja VIP para conversar com profissionais.'); return; }
+      const text = $('#pro-input').value.trim();
+      if(!text) return;
+      const arr = JSON.parse(localStorage.getItem('fit_pro_messages')||'[]');
+      arr.push({text, who:'me', t:new Date().toISOString()});
+      localStorage.setItem('fit_pro_messages', JSON.stringify(arr));
+      $('#pro-input').value='';
+      renderProMessages();
+    });
+
+    /* -------------------- Agendamento VIP (mock) -------------------- */
+    $('#book-pro').addEventListener('click', ()=>{
+      const u = getUser();
+      if(!u || !u.isVip){ alert('Assinatura premium necessária para agendar com profissionais.'); return; }
+      const t = $('#pro-date').value;
+      const type = $('#pro-type').value;
+      if(!t){ alert('Escolha data/hora'); return; }
+      alert(`Agendado com ${type} em ${new Date(t).toLocaleString()}`);
+    });
+
+    /* -------------------- Become VIP (mock) -------------------- */
+    $('#become-vip').addEventListener('click', ()=>{
+      const u = getUser();
+      if(!u){ alert('Faça login para assinar Premium.'); return; }
+      if(confirm('Assinar Premium por R$39/mês (mock)?')){
+        const updated = {...u, isVip:true};
+        setUser(updated);
+        alert('Parabéns! Você agora é VIP ✨');
+      }
+    });
+
+    /* -------------------- Mini inits e renderizações -------------------- */
+    function init(){
+      renderUser();
+      renderChecks();
+      updateProgress();
+      renderWater();
+      renderMiniMessages();
+      renderRecipes();
+      renderFeatured();
+      renderComm();
+      renderWorkouts();
+      renderChartCarga();
+      renderChartPeso();
+      // selfcare checklist
+      const sc = ['Double cleanse','Hidratar rosto','Máscara (semanal)'];
+      const scont = $('#selfcare-checklist');
+      scont.innerHTML='';
+      sc.forEach((t,i)=> {
+        const div=document.createElement('div'); div.className='item';
+        div.innerHTML = `<label><input type="checkbox" /> <span>${t}</span></label>`;
+        scont.appendChild(div);
+      });
+    }
+    init();
+
+    /* -------------------- Events: Add quick, featured etc -------------------- */
+    $('#add-quick').addEventListener('click', ()=>{
+      const type = prompt('O que deseja adicionar? (treino / receita / check)');
+      if(!type) return;
+      if(type==='check'){ const t=prompt('Nome da tarefa'); if(t){ const arr=loadChecks(); arr.push({text:t,done:false}); saveChecks(arr); renderChecks(); updateProgress(); } }
+      else if(type==='receita'){ $('#tabs-container [data-tab-content="receitas"]').style.display='block'; navBtns.forEach(x=>x.classList.remove('active')); $$('.nav-btn').find(b=>b.dataset.tab==='receitas')?.classList.add('active'); }
+      else if(type==='treino'){ alert('Adicione via Treinos & Evolução'); }
+    });
+
+    /* -------------------- small UX bindings -------------------- */
+    // add listener to workout filter buttons
+    $$('[data-work]').forEach(b=> b.addEventListener('click', e=> renderWorkouts(e.target.dataset.work)));
+    // featured "today workouts"
+    function renderTodayWorkouts(){
+      const container = $('#today-workouts'); container.innerHTML='';
+      [mockWorkouts[1], mockWorkouts[2]].forEach(w=>{
+        const el = document.createElement('div'); el.className='workout';
+        el.innerHTML = `<strong>${w.title}</strong><div class="meta">${w.duration} min • ${w.type}</div><div style="display:flex;gap:8px;margin-top:8px;"><button class="btn" onclick="alert('Iniciando treino')">Iniciar</button></div>`;
+        container.appendChild(el);
+      });
+    }
+    renderTodayWorkouts();
+
+    // chat feed initial
+    $('#feed').innerHTML = '<li>Sophia completou 7 dias seguidos ✨</li><li>Lara aumentou carga no supino 💪</li>';
+
+    // render pro messages if VIP
+    renderProMessages();
+
+    // clickable VIP nav: if not VIP, show locked content message
+    document.querySelectorAll('[data-tab-content="vip"], [data-tab-content="treinos"] .locked').forEach(el=>{
+      // nothing special here
+    });
+
+    // small helper: find nav button by dataset
+    // fix for missing method find on NodeList in older browsers
+    (function polyfillFind(){ if(!Array.prototype.find){ Array.prototype.find = function(cb){ for(let i=0;i<this.length;i++){ if(cb(this[i],i,this)) return this[i]; } return undefined; } } })();
+
+    // render recipes initially with persisted or mock
+    renderRecipes();
+
+    /* -------------------- End of script -------------------- */
+  </script>
+
+</body>
+</html>
