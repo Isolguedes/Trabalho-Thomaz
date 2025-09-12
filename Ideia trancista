@@ -5,145 +5,263 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Agendamento de Tranças</title>
 <style>
-    body { font-family: Arial, sans-serif; background-color: #f3eafc; color: #4a148c; }
-    h1, h2 { color: #6a1b9a; }
-    .container { max-width: 900px; margin: auto; padding: 20px; }
-    label { display: block; margin-top: 10px; }
-    input, select, button { margin-top: 5px; padding: 8px; width: 100%; max-width: 400px; }
-    .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-top: 20px; }
-    .day { padding: 10px; text-align: center; cursor: pointer; border-radius: 5px; }
-    .available { background-color: #81c784; }
-    .occupied { background-color: #e57373; cursor: not-allowed; }
-    .blocked { background-color: #b0bec5; cursor: not-allowed; }
+:root{
+  --lavender-100: #F3EAF6;
+  --lavender-200: #E6D9EE;
+  --lavender-300: #C8A2C8;
+  --lavender-400: #B99AC6;
+  --gold: #D4AF37;
+  --accent: #FF78A6;
+  --bg: #FFFFFF;
+  --muted: #6b6b6b;
+  --glass: rgba(255,255,255,0.6);
+  --radius: 14px;
+  --shadow: 0 6px 20px rgba(0,0,0,0.08);
+}
+
+html, body{
+  height:100%;
+  margin:0;
+  font-family: "Montserrat", sans-serif;
+  background: linear-gradient(180deg, #F9F5FB 0%, var(--lavender-100) 100%);
+  color:#1a1a1a;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  box-sizing: border-box;
+}
+
+*, *::before, *::after { box-sizing: inherit; }
+
+.container {
+  max-width: 1000px;
+  margin: 40px auto;
+  padding: 20px;
+  background: var(--glass);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+h1,h2{text-align:center; color: var(--lavender-300);}
+label{display:block;margin-top:15px;font-weight:600;color:var(--lavender-400);}
+input, select, button, textarea{
+  width:100%;padding:12px;margin-top:5px;border-radius: var(--radius);border:1px solid #ccc;font-size:1rem;font-family:inherit;
+}
+button{
+  background: var(--gold);color:#fff;font-weight:700;border:none;cursor:pointer;transition:0.3s;
+}
+button:hover{background: var(--accent);}
+.image-option{
+  display:inline-block;margin:10px;border:2px solid transparent;border-radius: var(--radius);overflow:hidden;cursor:pointer;transition:0.3s;text-align:center;
+}
+.image-option img{width:150px;height:150px;object-fit:cover;display:block;}
+.image-option.selected{border:2px solid var(--gold);}
+.value-tag{margin-top:5px;font-weight:600;color:var(--lavender-300);}
+#calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:20px;}
+.day{padding:10px;text-align:center;border-radius: var(--radius);cursor:pointer;}
+.available{background-color:#81c784;}
+.occupied{background-color:#e57373;cursor:not-allowed;}
+.blocked{background-color:#b0bec5;cursor:not-allowed;}
 </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Agendamento de Tranças</h1>
+<h1>Agendamento de Tranças</h1>
 
-    <h2>Formulário de Agendamento</h2>
-    <form id="agendamentoForm">
-        <label>Nome:</label>
-        <input type="text" id="nome" required>
+<h2>Formulário de Agendamento</h2>
+<form id="agendamentoForm">
+  <label>Nome:</label>
+  <input type="text" id="nome" required>
 
-        <label>Telefone/WhatsApp:</label>
-        <input type="text" id="telefone" required>
+  <label>Telefone/WhatsApp:</label>
+  <input type="text" id="telefone" required>
 
-        <label>Upload de Foto do Cabelo:</label>
-        <input type="file" id="foto" accept="image/*">
+  <label>Upload de Foto do Cabelo:</label>
+  <input type="file" id="foto" accept="image/*">
 
-        <label>Tipo de Trança:</label>
-        <select id="tipoTranca" required>
-            <option value="Nagô">Nagô (Raizada) - 1.5h</option>
-            <option value="Box Braids Curto">Box Braids Curto - 4h</option>
-            <option value="Box Braids Longo">Box Braids Longo - 6h</option>
-            <option value="Twist">Twist - 3h</option>
-            <option value="Knotless">Knotless - 5h</option>
-            <option value="Chassé">Chassé - 2h</option>
-        </select>
+  <label>Tipo de Trança:</label>
+  <div id="tipoTrancaContainer">
+    <!-- Imagens de tranças -->
+  </div>
 
-        <label>Tamanho:</label>
-        <select id="tamanho">
-            <option value="Curto">Curto (ombro)</option>
-            <option value="Médio">Médio (costas)</option>
-            <option value="Longo">Longo (cintura)</option>
-            <option value="Extra Longo">Extra Longo (quadril)</option>
-        </select>
+  <label>Tamanho:</label>
+  <div id="tamanhoContainer">
+    <!-- Imagens de tamanhos -->
+  </div>
 
-        <label>Extras:</label>
-        <select id="extras">
-            <option value="Sem Cachos">Sem Cachos</option>
-            <option value="Com Cachos">Com Cachos</option>
-            <option value="Cor Natural">Cor Natural</option>
-            <option value="Colorida">Colorida</option>
-        </select>
+  <label>Material:</label>
+  <select id="material">
+    <option value="Cliente">Fornecido pela Cliente</option>
+    <option value="Trancista">Fornecido pela Trancista (+R$50)</option>
+  </select>
 
-        <label>Material:</label>
-        <select id="material">
-            <option value="Trancista">Fornecido pela Trancista</option>
-            <option value="Cliente">Fornecido pela Cliente</option>
-        </select>
+  <div id="corContainer" style="display:none;">
+    <label>Escolher Cor:</label>
+    <select id="cores">
+      <option value="Natural">Natural</option>
+      <option value="Preto">Preto</option>
+      <option value="Castanho">Castanho</option>
+      <option value="Outra">Outra</option>
+    </select>
+    <div id="outraCorContainer" style="display:none;">
+      <input type="text" id="outraCor" placeholder="Digite a cor desejada">
+      <input type="file" id="fotoCor" accept="image/*">
+    </div>
+  </div>
 
-        <label>Serviço Adicional:</label>
-        <select id="servicoAdicional">
-            <option value="Nenhum">Nenhum</option>
-            <option value="Hidratação Pré">Hidratação Pré-Trança</option>
-            <option value="Cronograma Pós">Cronograma Pós-Trança</option>
-        </select>
+  <label>Serviço Adicional:</label>
+  <select id="servicoAdicional">
+    <option value="Nenhum">Nenhum</option>
+    <option value="HidratacaoPre">Hidratação Pré-Trança (+R$30)</option>
+    <option value="CronogramaPos">Cronograma Pós-Trança (+R$30)</option>
+  </select>
 
-        <button type="submit">Confirmar Agendamento</button>
-    </form>
+  <p><strong>Valor Total: R$<span id="valorTotal">0</span></strong></p>
 
-    <h2>Escolha a Data e Hora</h2>
-    <div id="calendar" class="calendar"></div>
+  <button type="submit">Confirmar Agendamento</button>
+</form>
+
+<h2>Escolha a Data</h2>
+<div id="calendar"></div>
 
 </div>
 
 <script>
+// Dados iniciais
+const tipoTrancas = [
+  {nome:"Nagô", valor:100, img:"https://i.imgur.com/qZs8t4b.jpg", duracao:1.5},
+  {nome:"Box Braids Curto", valor:150, img:"https://i.imgur.com/8Kf1Uwl.jpg", duracao:4},
+  {nome:"Box Braids Longo", valor:200, img:"https://i.imgur.com/HqQ5S0v.jpg", duracao:6},
+  {nome:"Twist", valor:120, img:"https://i.imgur.com/3kMZR0x.jpg", duracao:3},
+  {nome:"Knotless", valor:180, img:"https://i.imgur.com/8p0g0IH.jpg", duracao:5},
+  {nome:"Chassé", valor:80, img:"https://i.imgur.com/4l3d5rG.jpg", duracao:2}
+];
+
+const tamanhos = [
+  {nome:"Curto", valor:0, img:"https://i.imgur.com/7Q7Lr3r.jpg"},
+  {nome:"Médio", valor:20, img:"https://i.imgur.com/QbM7s0u.jpg"},
+  {nome:"Longo", valor:40, img:"https://i.imgur.com/mLOyG9h.jpg"},
+  {nome:"Extra Longo", valor:60, img:"https://i.imgur.com/BlFv6r3.jpg"}
+];
+
+let agendamentos = [];
+let selectedTranca = null;
+let selectedTamanho = null;
+let valorTotal = 0;
+
+// Criar opções de tranças
+const tipoContainer = document.getElementById("tipoTrancaContainer");
+tipoTrancas.forEach((t,i)=>{
+  let div = document.createElement("div");
+  div.className="image-option";
+  div.innerHTML = `<img src="${t.img}"><div>${t.nome}</div><div class="value-tag">R$${t.valor}</div>`;
+  div.addEventListener("click", ()=>{
+    document.querySelectorAll("#tipoTrancaContainer .image-option").forEach(el=>el.classList.remove("selected"));
+    div.classList.add("selected");
+    selectedTranca = t;
+    calcularValor();
+  });
+  tipoContainer.appendChild(div);
+});
+
+// Criar opções de tamanhos
+const tamanhoContainer = document.getElementById("tamanhoContainer");
+tamanhos.forEach((t,i)=>{
+  let div = document.createElement("div");
+  div.className="image-option";
+  div.innerHTML = `<img src="${t.img}"><div>${t.nome}</div><div class="value-tag">+R$${t.valor}</div>`;
+  div.addEventListener("click", ()=>{
+    document.querySelectorAll("#tamanhoContainer .image-option").forEach(el=>el.classList.remove("selected"));
+    div.classList.add("selected");
+    selectedTamanho = t;
+    calcularValor();
+  });
+  tamanhoContainer.appendChild(div);
+});
+
+// Material e cores
+const materialSelect = document.getElementById("material");
+const corContainer = document.getElementById("corContainer");
+materialSelect.addEventListener("change", ()=>{
+  if(materialSelect.value==="Trancista"){
+    corContainer.style.display="block";
+  }else{
+    corContainer.style.display="none";
+    document.getElementById("outraCorContainer").style.display="none";
+  }
+});
+
+const coresSelect = document.getElementById("cores");
+const outraCorContainer = document.getElementById("outraCorContainer");
+coresSelect.addEventListener("change", ()=>{
+  if(coresSelect.value==="Outra"){
+    outraCorContainer.style.display="block";
+  }else{
+    outraCorContainer.style.display="none";
+  }
+  calcularValor();
+});
+
+// Serviços adicionais
+const servicoSelect = document.getElementById("servicoAdicional");
+servicoSelect.addEventListener("change", calcularValor);
+
+// Função calcular valor total
+function calcularValor(){
+  valorTotal = 0;
+  if(selectedTranca) valorTotal += selectedTranca.valor;
+  if(selectedTamanho) valorTotal += selectedTamanho.valor;
+  if(materialSelect.value==="Trancista") valorTotal += 50;
+  if(servicoSelect.value!=="Nenhum") valorTotal += 30;
+  document.getElementById("valorTotal").textContent = valorTotal;
+}
+
+// Calendário
 const calendar = document.getElementById("calendar");
-const diasSemana = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
-const bloqueados = [1,2]; // Segunda e terça
-let agendamentos = []; // Simulação do banco de dados
+const bloqueados = [1,2]; // Seg e Ter
+function gerarCalendar(){
+  calendar.innerHTML="";
+  const hoje = new Date();
+  for(let i=0;i<30;i++){ // próximo mês
+    let data = new Date();
+    data.setDate(hoje.getDate()+i);
+    let diaSemana = data.getDay();
+    let diaDiv = document.createElement("div");
+    diaDiv.className="day";
+    let dataStr = data.toISOString().split('T')[0];
 
-function gerarCalendar() {
-    calendar.innerHTML = "";
-    const hoje = new Date();
-    for(let i=0; i<14; i++){ // Próximas 2 semanas
-        let data = new Date();
-        data.setDate(hoje.getDate() + i);
-        let diaSemana = data.getDay();
-        let diaDiv = document.createElement("div");
-        diaDiv.classList.add("day");
-
-        // Data formatada
-        let dataStr = data.toISOString().split('T')[0];
-
-        // Bloqueado por dia da semana
-        if(bloqueados.includes(diaSemana)){
-            diaDiv.classList.add("blocked");
-        }
-        // Bloqueado por já ter agendamento
-        else if(agendamentos.find(a => a.data === dataStr)){
-            diaDiv.classList.add("occupied");
-        }
-        else{
-            diaDiv.classList.add("available");
-            diaDiv.addEventListener("click", () => selecionarDia(dataStr));
-        }
-
-        diaDiv.textContent = dataStr;
-        calendar.appendChild(diaDiv);
+    if(bloqueados.includes(diaSemana)){
+      diaDiv.classList.add("blocked");
+    } else if(agendamentos.find(a=>a.data===dataStr)){
+      diaDiv.classList.add("occupied");
+    } else {
+      diaDiv.classList.add("available");
+      diaDiv.addEventListener("click", ()=>selecionarDia(dataStr));
     }
+    diaDiv.textContent = dataStr;
+    calendar.appendChild(diaDiv);
+  }
 }
 
-function selecionarDia(data) {
-    let tipo = document.getElementById("tipoTranca").value;
-    let duracao = getDuracao(tipo);
-    let hora = prompt(`Digite a hora inicial (ex: 14:00). A duração é ${duracao}h.`);
-    if(hora){
-        // Simula horário bloqueado no banco
-        agendamentos.push({data, hora, tipo});
-        alert(`Agendamento de ${tipo} confirmado em ${data} às ${hora}`);
-        gerarCalendar();
-    }
-}
-
-function getDuracao(tipo){
-    switch(tipo){
-        case "Nagô": return 1.5;
-        case "Box Braids Curto": return 4;
-        case "Box Braids Longo": return 6;
-        case "Twist": return 3;
-        case "Knotless": return 5;
-        case "Chassé": return 2;
-        default: return 2;
-    }
+function selecionarDia(data){
+  if(!selectedTranca){
+    alert("Selecione o tipo de trança antes!");
+    return;
+  }
+  let duracao = selectedTranca.duracao;
+  let hora = prompt(`Digite a hora inicial (ex: 14:00) - duração da trança: ${duracao}h`);
+  if(hora){
+    agendamentos.push({data,hora,tipo:selectedTranca.nome});
+    alert(`Agendamento confirmado: ${selectedTranca.nome} em ${data} às ${hora}`);
+    // Simular envio WhatsApp
+    alert(`Mensagem enviada para WhatsApp/E-mail da cliente! Valor: R$${valorTotal}`);
+    gerarCalendar();
+  }
 }
 
 document.getElementById("agendamentoForm").addEventListener("submit", function(e){
-    e.preventDefault();
-    alert("Formulário enviado! Escolha a data e hora no calendário abaixo.");
+  e.preventDefault();
+  alert("Formulário enviado! Escolha a data no calendário abaixo.");
 });
 
 gerarCalendar();
