@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agendamento de Tranças</title>
+<style>
+    body { font-family: Arial, sans-serif; background-color: #f3eafc; color: #4a148c; }
+    h1, h2 { color: #6a1b9a; }
+    .container { max-width: 900px; margin: auto; padding: 20px; }
+    label { display: block; margin-top: 10px; }
+    input, select, button { margin-top: 5px; padding: 8px; width: 100%; max-width: 400px; }
+    .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-top: 20px; }
+    .day { padding: 10px; text-align: center; cursor: pointer; border-radius: 5px; }
+    .available { background-color: #81c784; }
+    .occupied { background-color: #e57373; cursor: not-allowed; }
+    .blocked { background-color: #b0bec5; cursor: not-allowed; }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Agendamento de Tranças</h1>
+
+    <h2>Formulário de Agendamento</h2>
+    <form id="agendamentoForm">
+        <label>Nome:</label>
+        <input type="text" id="nome" required>
+
+        <label>Telefone/WhatsApp:</label>
+        <input type="text" id="telefone" required>
+
+        <label>Upload de Foto do Cabelo:</label>
+        <input type="file" id="foto" accept="image/*">
+
+        <label>Tipo de Trança:</label>
+        <select id="tipoTranca" required>
+            <option value="Nagô">Nagô (Raizada) - 1.5h</option>
+            <option value="Box Braids Curto">Box Braids Curto - 4h</option>
+            <option value="Box Braids Longo">Box Braids Longo - 6h</option>
+            <option value="Twist">Twist - 3h</option>
+            <option value="Knotless">Knotless - 5h</option>
+            <option value="Chassé">Chassé - 2h</option>
+        </select>
+
+        <label>Tamanho:</label>
+        <select id="tamanho">
+            <option value="Curto">Curto (ombro)</option>
+            <option value="Médio">Médio (costas)</option>
+            <option value="Longo">Longo (cintura)</option>
+            <option value="Extra Longo">Extra Longo (quadril)</option>
+        </select>
+
+        <label>Extras:</label>
+        <select id="extras">
+            <option value="Sem Cachos">Sem Cachos</option>
+            <option value="Com Cachos">Com Cachos</option>
+            <option value="Cor Natural">Cor Natural</option>
+            <option value="Colorida">Colorida</option>
+        </select>
+
+        <label>Material:</label>
+        <select id="material">
+            <option value="Trancista">Fornecido pela Trancista</option>
+            <option value="Cliente">Fornecido pela Cliente</option>
+        </select>
+
+        <label>Serviço Adicional:</label>
+        <select id="servicoAdicional">
+            <option value="Nenhum">Nenhum</option>
+            <option value="Hidratação Pré">Hidratação Pré-Trança</option>
+            <option value="Cronograma Pós">Cronograma Pós-Trança</option>
+        </select>
+
+        <button type="submit">Confirmar Agendamento</button>
+    </form>
+
+    <h2>Escolha a Data e Hora</h2>
+    <div id="calendar" class="calendar"></div>
+
+</div>
+
+<script>
+const calendar = document.getElementById("calendar");
+const diasSemana = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+const bloqueados = [1,2]; // Segunda e terça
+let agendamentos = []; // Simulação do banco de dados
+
+function gerarCalendar() {
+    calendar.innerHTML = "";
+    const hoje = new Date();
+    for(let i=0; i<14; i++){ // Próximas 2 semanas
+        let data = new Date();
+        data.setDate(hoje.getDate() + i);
+        let diaSemana = data.getDay();
+        let diaDiv = document.createElement("div");
+        diaDiv.classList.add("day");
+
+        // Data formatada
+        let dataStr = data.toISOString().split('T')[0];
+
+        // Bloqueado por dia da semana
+        if(bloqueados.includes(diaSemana)){
+            diaDiv.classList.add("blocked");
+        }
+        // Bloqueado por já ter agendamento
+        else if(agendamentos.find(a => a.data === dataStr)){
+            diaDiv.classList.add("occupied");
+        }
+        else{
+            diaDiv.classList.add("available");
+            diaDiv.addEventListener("click", () => selecionarDia(dataStr));
+        }
+
+        diaDiv.textContent = dataStr;
+        calendar.appendChild(diaDiv);
+    }
+}
+
+function selecionarDia(data) {
+    let tipo = document.getElementById("tipoTranca").value;
+    let duracao = getDuracao(tipo);
+    let hora = prompt(`Digite a hora inicial (ex: 14:00). A duração é ${duracao}h.`);
+    if(hora){
+        // Simula horário bloqueado no banco
+        agendamentos.push({data, hora, tipo});
+        alert(`Agendamento de ${tipo} confirmado em ${data} às ${hora}`);
+        gerarCalendar();
+    }
+}
+
+function getDuracao(tipo){
+    switch(tipo){
+        case "Nagô": return 1.5;
+        case "Box Braids Curto": return 4;
+        case "Box Braids Longo": return 6;
+        case "Twist": return 3;
+        case "Knotless": return 5;
+        case "Chassé": return 2;
+        default: return 2;
+    }
+}
+
+document.getElementById("agendamentoForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    alert("Formulário enviado! Escolha a data e hora no calendário abaixo.");
+});
+
+gerarCalendar();
+</script>
+
+</body>
+</html>
