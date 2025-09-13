@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agendamento de Tranças</title>
+<style>
+:root{
+  --fundo:#DAC9BC;
+  --sec:#AAA39D;
+  --prim:#A47458;
+  --lavender:#C8A2C8;
+  --gold:#D4AF37;
+  --accent:#FF78A6;
+  --glass:rgba(255,255,255,0.85);
+  --radius:14px;
+  --shadow:0 6px 20px rgba(0,0,0,0.08);
+}
+body{margin:0;font-family:"Montserrat",sans-serif;background:var(--fundo);}
+.container{
+  max-width:900px;margin:60px auto;padding:20px;background:var(--glass);
+  border-radius:var(--radius);box-shadow:var(--shadow);position:relative;
+  backdrop-filter:blur(10px);overflow:hidden;
+}
+.banner{
+  position:absolute;top:0;left:0;width:100%;height:100%;
+  background:url('https://i.imgur.com/yourBanner.jpg') center/cover no-repeat;
+  z-index:-1;filter:brightness(0.6);
+}
+.header{display:flex;align-items:center;justify-content:center;margin-bottom:20px;}
+.logo{width:60px;height:60px;border-radius:50%;background:#fff;margin-right:15px;object-fit:cover;}
+h1{text-align:center;color:var(--prim);}
+label{display:block;margin-top:15px;font-weight:600;color:var(--prim);}
+input,select,button{width:100%;padding:12px;margin-top:5px;border-radius:var(--radius);border:1px solid #ccc;font-size:1rem;color:#333;}
+input::placeholder{color:var(--sec);}
+button{background:var(--gold);color:#fff;font-weight:700;border:none;cursor:pointer;transition:0.3s;}
+button:hover{background:var(--accent);}
+.image-option{display:inline-block;margin:10px;border:2px solid transparent;border-radius:var(--radius);overflow:hidden;cursor:pointer;text-align:center;}
+.image-option img{width:150px;height:150px;object-fit:cover;display:block;}
+.image-option.selected{border:2px solid var(--gold);}
+.value-tag{margin-top:5px;font-weight:600;color:var(--lavender);}
+#calendarContainer{display:none;margin-top:20px;background:#fff;padding:15px;border-radius:var(--radius);}
+.calendar-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-weight:600;color:var(--prim);}
+.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;}
+.day-name{text-align:center;font-weight:600;color:var(--sec);}
+.day{padding:10px;text-align:center;border-radius:var(--radius);cursor:pointer;}
+.available{background-color:#81c784;}
+.occupied{background-color:#e57373;cursor:not-allowed;}
+.blocked{background-color:#b0bec5;cursor:not-allowed;}
+#horarios{display:flex;flex-wrap:wrap;margin-top:10px;justify-content:center;}
+.horario-btn{width:50px;height:50px;margin:5px;border-radius:50%;border:none;cursor:pointer;background:var(--lavender);color:#fff;font-weight:600;display:flex;align-items:center;justify-content:center;}
+.horario-btn.ocupado{background:#e57373;cursor:not-allowed;}
+.horario-btn.selected{border:2px solid var(--gold);}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="banner"></div>
+
+<div class="header">
+<img class="logo" src="https://i.imgur.com/yourLogo.jpg" alt="Logo">
+<h1>Agendamento de Tranças</h1>
+</div>
+
+<form id="agendamentoForm">
+<label>Nome:</label><input type="text" id="nome" placeholder="Digite seu nome" required>
+<label>Telefone/WhatsApp:</label><input type="text" id="telefone" placeholder="(XX) XXXXX-XXXX" required>
+<label>Foto do cabelo:</label><input type="file" id="foto" accept="image/*" required>
+
+<label>Tipo de Trança:</label><div id="tipoTrancaContainer"></div>
+<label>Tamanho:</label><div id="tamanhoContainer"></div>
+
+<label>Material:</label>
+<select id="material">
+<option value="Cliente">Fornecido pela Cliente</option>
+<option value="Trancista">Fornecido pela Trancista (+R$50)</option>
+</select>
+<div id="corContainer" style="display:none;">
+<label>Escolher Cor:</label>
+<select id="cores">
+<option value="Natural">Natural</option>
+<option value="Preto">Preto</option>
+<option value="Castanho">Castanho</option>
+<option value="Outra">Outra</option>
+</select>
+<div id="outraCorContainer" style="display:none;">
+<input type="text" id="outraCor" placeholder="Digite a cor desejada">
+<input type="file" id="fotoCor" accept="image/*">
+</div>
+</div>
+
+<label>Serviço Adicional:</label>
+<select id="servicoAdicional">
+<option value="Nenhum">Nenhum</option>
+<option value="HidratacaoPre">Hidratação Pré-Trança (+R$30)</option>
+<option value="CronogramaPos">Cronograma Pós-Trança (+R$30)</option>
+</select>
+
+<p><strong>Valor Total: R$<span id="valorTotal">0</span></strong></p>
+<button type="submit">Confirmar Formulário</button>
+</form>
+
+<h2>Escolha a Data e Horário</h2>
+<button id="openCalendarBtn">Escolher Data</button>
+<div id="calendarContainer">
+<div class="calendar-header">
+<button id="prevMonth">&lt;</button>
+<span id="monthYear"></span>
+<button id="nextMonth">&gt;</button>
+</div>
+<div class="calendar-grid" id="calendar"></div>
+<h3>Horários disponíveis:</h3>
+<div id="horarios"></div>
+<button id="confirmAgendamentoBtn" style="margin-top:15px;">Confirmar Agendamento</button>
+</div>
+</div>
+
+<script>
+// Dados tranças e tamanhos
+const tipoTrancas=[{name:"Nagô",valor:100,img:"https://i.imgur.com/qZs8t4b.jpg"},{name:"Box Braids Curto",valor:150,img:"https://i.imgur.com/8Kf1Uwl.jpg"},{name:"Box Braids Longo",valor:200,img:"https://i.imgur.com/HqQ5S0v.jpg"}];
+const tamanhos=[{name:"Curto",valor:0,img:"https://i.imgur.com/7Q7Lr3r.jpg"},{name:"Médio",valor:20,img:"https://i.imgur.com/QbM7s0u.jpg"},{name:"Longo",valor:40,img:"https://i.imgur.com/mLOyG9h.jpg"},{name:"Extra Longo",valor:60,img:"https://i.imgur.com/BlFv6r3.jpg"}];
+
+let agendamentos=[];
+let selectedTranca=null,selectedTamanho=null,selectedData=null,selectedHora=null,valorTotal=0;
+
+// Criar opções de trança e tamanho
+function criarOpcoes(container,dados,isTamanho=false){
+  dados.forEach(t=>{
+    let div=document.createElement("div");
+    div.className="image-option";
+    div.innerHTML=`<img src="${t.img}"><div>${t.name}</div><div class="value-tag">R$${t.valor}</div>`;
+    div.addEventListener("click", ()=>{
+      document.querySelectorAll(container+" .image-option").forEach(el=>el.classList.remove("selected"));
+      div.classList.add("selected");
+      if(isTamanho) selectedTamanho=t; else selectedTranca=t;
+      calcularValor();
+    });
+    document.querySelector(container).appendChild(div);
+  });
+}
+criarOpcoes("#tipoTrancaContainer",tipoTrancas);
+criarOpcoes("#tamanhoContainer",tamanhos,true);
+
+// Material e cores
+const materialSelect=document.getElementById("material");
+const corContainer=document.getElementById("corContainer");
+materialSelect.addEventListener("change",()=>{
+  if(materialSelect.value==="Trancista") corContainer.style.display="block";
+  else {corContainer.style.display="none";document.getElementById("outraCorContainer").style.display="none";}
+});
+const coresSelect=document.getElementById("cores");
+const outraCorContainer=document.getElementById("outraCorContainer");
+coresSelect.addEventListener("change",()=>{
+  if(coresSelect.value==="Outra") outraCorContainer.style.display="block";
+  else outraCorContainer.style.display="none";
+  calcularValor();
+});
+
+// Serviço adicional
+document.getElementById("servicoAdicional").addEventListener("change",calcularValor);
+
+function calcularValor(){
+  valorTotal=0;
+  if(selectedTranca) valorTotal+=selectedTranca.valor;
+  if(selectedTamanho) valorTotal+=selectedTamanho.valor;
+  if(materialSelect.value==="Trancista") valorTotal+=50;
+  if(document.getElementById("servicoAdicional").value!=="Nenhum") valorTotal+=30;
+  document.getElementById("valorTotal").textContent=valorTotal;
+}
+
+// Calendário real
+let currentMonth=new Date().getMonth();
+let currentYear=new Date().getFullYear();
+const monthYearSpan=document.getElementById("monthYear");
+const calendarGrid=document.getElementById("calendar");
+
+document.getElementById("prevMonth").addEventListener("click",()=>{currentMonth--;if(currentMonth<0){currentMonth=11;currentYear--;} gerarCalendarReal();});
+document.getElementById("nextMonth").addEventListener("click",()=>{currentMonth++;if(currentMonth>11){currentMonth=0;currentYear++;} gerarCalendarReal();});
+document.getElementById("openCalendarBtn").addEventListener("click",()=>{document.getElementById("calendarContainer").style.display="block"; gerarCalendarReal();});
+
+function gerarCalendarReal(){
+  calendarGrid.innerHTML="";
+  const mesAtual=currentMonth;
+  const anoAtual=currentYear;
+  const mesNome=new Date(anoAtual,mesAtual).toLocaleString('pt-BR',{month:'long'});
+  monthYearSpan.textContent=`${mesNome} ${anoAtual}`;
+  const primeiroDia=new Date(anoAtual,mesAtual,1).getDay();
+  const diasNoMes=new Date(anoAtual,mesAtual+1,0).getDate();
+  const diasSemana=["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+  diasSemana.forEach(dia=>{let div=document.createElement("div");div.className="day-name";div.textContent=dia;calendarGrid.appendChild(div);});
+  for(let i=0;i<primeiroDia;i++){let div=document.createElement("div");calendarGrid.appendChild(div);}
+  for(let d=1;d<=diasNoMes;d++){
+    let diaDiv=document.createElement("div");
+    diaDiv.className="day";
+    let dataStr=new Date(anoAtual,mesAtual,d).toISOString().split('T')[0];
+    const diaSemana=new Date(anoAtual,mesAtual,d).getDay();
+    const hoje=new Date();
+    if(diaSemana===1||diaSemana===2||new Date(anoAtual,mesAtual,d)<hoje){diaDiv.classList.add("blocked");}
+    else{diaDiv.classList.add("available"); diaDiv.addEventListener("click",()=>selecionarData(dataStr));}
+    diaDiv.textContent=d;
+    calendarGrid.appendChild(diaDiv);
+  }
+}
+
+// Horários
+const horariosDiv=document.getElementById("horarios");
+function selecionarData(data){selectedData=data;gerarHorarios();}
+function gerarHorarios(){
+  horariosDiv.innerHTML="";
+  const horas=["08:00","10:00","12:00","14:00","16:00","18:00"];
+  horas.forEach(h=>{
+    let btn=document.createElement("button");
+    btn.className="horario-btn";
+    btn.textContent=h;
+    if(agendamentos.find(a=>a.data===selectedData && a.hora===h)){btn.classList.add("ocupado"); btn.disabled=true;}
+    btn.addEventListener("click",()=>{
+      document.querySelectorAll("#horarios .horario-btn").forEach(el=>el.classList.remove("selected"));
+      btn.classList.add("selected");
+      selectedHora=h;
+    });
+    horariosDiv.appendChild(btn);
+  });
+}
+
+// Confirmar agendamento
+document.getElementById("confirmAgendamentoBtn").addEventListener("click",()=>{
+  if(!selectedData || !selectedHora){alert("Escolha data e horário");return;}
+  if(!selectedTranca || !selectedTamanho){alert("Escolha trança e tamanho");return;}
+  if(!document.getElementById("foto").files.length){alert("Envie a foto do cabelo");return;}
+  const nome=document.getElementById("nome").value;
+  const telefone=document.getElementById("telefone").value;
+  agendamentos.push({nome,telefone,tranca:selectedTranca.name,tamanho:selectedTamanho.name,data:selectedData,hora:selectedHora,valor:valorTotal});
+  const mensagem=`Olá ${nome}! 💜 Seu agendamento foi confirmado para ${selectedTranca.name} (${selectedTamanho.name}) no dia ${selectedData} às ${selectedHora}. Valor: R$${valorTotal}. Estamos ansiosas para te atender!`;
+  const whatsappUrl=`https://api.whatsapp.com/send?phone=5538999244236&text=${encodeURIComponent(mensagem)}`;
+  window.open(whatsappUrl,"
