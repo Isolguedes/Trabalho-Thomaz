@@ -1,0 +1,289 @@
+<script>
+  /* -------------------- Dados iniciais (mock) -------------------- */
+  const mockRecipes = [
+    { id:1, title:'Bowl Rosa Proteico', tags:['protein','post'], time:10, img:'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=60' },
+    { id:2, title:'Salada Low Carb Glam', tags:['lowcarb','vegan'], time:12, img:'https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&w=800&q=60' },
+    { id:3, title:'Smoothie Pré-treino', tags:['pre','vegan'], time:5, img:'https://images.unsplash.com/photo-1497534446932-c925b458314e?auto=format&fit=crop&w=800&q=60' },
+    { id:4, title:'Brownie de Batata Doce', tags:['post','dessert'], time:20, img:'https://images.unsplash.com/photo-1604908177522-4ec9de4ec77b?auto=format&fit=crop&w=800&q=60' },
+  ];
+
+  const mockWorkouts = [
+    { id:'w1', title:'HIIT Blush — 20 min', type:'hiit', duration:20, exercises:['Jumping Jacks','Burpees','Mountain Climbers'] },
+    { id:'w2', title:'Tonificação Pernas', type:'funcional', duration:30, exercises:['Agachamento','Afundo','Ponte de Glúteo'] },
+    { id:'w3', title:'Yoga Flow — 15 min', type:'yoga', duration:15, exercises:['Saudação ao Sol','Postura da Criança','Prancha'] },
+    { id:'w4', title:'FitDance Pump', type:'fitdance', duration:25, exercises:['Aquecimento','Coreografia 1','Coreografia 2'] },
+  ];
+
+  /* -------------------- utilidades -------------------- */
+  const $ = sel => document.querySelector(sel);
+  const $$ = sel => Array.from(document.querySelectorAll(sel));
+
+  /* -------------------- Navegação de abas -------------------- */
+  const navBtns = $$('.nav-btn');
+  const tabContents = $$('[data-tab-content]').reduce((acc,el)=>{ acc[el.getAttribute('data-tab-content')] = el; return acc; },{});
+  navBtns.forEach(b=>{
+    b.addEventListener('click', ()=> {
+      navBtns.forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      Object.values(tabContents).forEach(el=>el.style.display='none');
+      tabContents[b.dataset.tab].style.display='block';
+    });
+  });
+
+  /* -------------------- Login (localStorage mock) -------------------- */
+  const modal = $('#modal-login');
+  const btnLogin = $('#btn-login');
+  const closeLogin = $('#close-login');
+  const doLogin = $('#do-login');
+  const btnLogout = $('#btn-logout');
+  const welcomeText = $('#welcome-text');
+  const vipBadge = $('#vip-badge');
+
+  function setUser(user){
+    localStorage.setItem('fit_user', JSON.stringify(user));
+    renderUser();
+  }
+  function getUser(){ return JSON.parse(localStorage.getItem('fit_user') || 'null'); }
+  function logout(){
+    localStorage.removeItem('fit_user');
+    renderUser();
+  }
+  function renderUser(){
+    const u = getUser();
+    if(u){
+      welcomeText.innerText = `Olá, ${u.name}!`;
+      btnLogin.style.display='none';
+      btnLogout.style.display='inline-block';
+      if(u.isVip) vipBadge.style.display='inline-block'; else vipBadge.style.display='none';
+      $('#greet-title').innerText = `Olá, ${u.name} ✨`;
+    } else {
+      welcomeText.innerText = 'Entrar para acessar recursos VIP';
+      btnLogin.style.display='inline-block';
+      btnLogout.style.display='none';
+      vipBadge.style.display='none';
+      $('#greet-title').innerText = `Olá, diva ✨`;
+    }
+  }
+  btnLogin.addEventListener('click', ()=> modal.style.display='flex');
+  closeLogin.addEventListener('click', ()=> modal.style.display='none');
+  doLogin.addEventListener('click', ()=>{
+    const name = $('#login-name').value.trim();
+    const email = $('#login-email').value.trim();
+    if(!name||!email){ alert('Preencha nome e e-mail.'); return; }
+    setUser({ name, email, isVip:false });
+    modal.style.display='none';
+  });
+  btnLogout.addEventListener('click', ()=>{ if(confirm('Deseja sair?')) logout(); });
+
+  /* -------------------- Checklist do dia -------------------- */
+  const defaultChecks = ['Aquecimento 5 min','Treino do dia','500ml água (manhã)','Refeição proteína','Skincare noturno'];
+  function loadChecks(){ return JSON.parse(localStorage.getItem('fit_checks') || 'null') || defaultChecks.map(t=>({text:t,done:false})); }
+  function saveChecks(arr){ localStorage.setItem('fit_checks', JSON.stringify(arr)); }
+  function renderChecks(){
+    const list = loadChecks();
+    const $cont = $('#checklist-items'); $cont.innerHTML='';
+    list.forEach((it, idx)=>{
+      const div = document.createElement('div');
+      div.className='item';
+      div.innerHTML = `<label><input type="checkbox" ${it.done? 'checked':''} data-idx="${idx}" /> <span>${it.text}</span></label>
+        <div style="display:flex;gap:8px;"><button class="btn secondary" data-del="${idx}">Excluir</button></div>`;
+      $cont.appendChild(div);
+    });
+    $cont.querySelectorAll('input[type=checkbox]').forEach(cb=>{
+      cb.addEventListener('change', e=>{
+        const idx = +e.target.dataset.idx;
+        const arr = loadChecks();
+        arr[idx].done = e.target.checked;
+        saveChecks(arr);
+        updateProgress();
+      });
+    });
+    $cont.querySelectorAll('[data-del]').forEach(btn=>{
+      btn.addEventListener('click', e=>{
+        const idx = +e.target.dataset.del;
+        const arr = loadChecks();
+        arr.splice(idx,1);
+        saveChecks(arr);
+        renderChecks();
+        updateProgress();
+      });
+    });
+  }
+  $('#add-check').addEventListener('click', ()=>{
+    const txt = $('#new-check-text').value.trim();
+    if(!txt) return;
+    const arr = loadChecks();
+    arr.push({ text: txt, done:false });
+    saveChecks(arr);
+    $('#new-check-text').value='';
+    renderChecks();
+    updateProgress();
+  });
+
+  /* -------------------- progress circle e agua -------------------- */
+  function updateProgress(){
+    const arr = loadChecks();
+    const done = arr.filter(x=>x.done).length;
+    const perc = Math.round((done / (arr.length || 1)) * 100);
+    $('#progress-num').innerText = perc;
+    const el = $('#daily-progress');
+    el.style.background = `conic-gradient(var(--lavender-300) ${perc}%, rgba(0,0,0,0.06) ${perc}%)`;
+  }
+  function renderWater(){
+    const container = $('#water-bubbles'); container.innerHTML='';
+    for(let i=0;i<8;i++){
+      const div=document.createElement('div');
+      div.className='bubble';
+      div.dataset.idx=i;
+      div.innerText = '💧';
+      div.addEventListener('click', ()=>{
+        div.style.opacity = div.style.opacity === '0.4' ? '1' : '0.4';
+      });
+      container.appendChild(div);
+    }
+  }
+
+  /* -------------------- Mini chat -------------------- */
+  const miniMessages = [{text:'Bora treinar hoje? ✨', who:'bot'},{text:'Eu já tô pronta 💪', who:'me'}];
+  function renderMiniMessages(){
+    const box = $('#mini-messages'); box.innerHTML='';
+    miniMessages.forEach(m=>{
+      const d = document.createElement('div');
+      d.className = 'msg ' + (m.who==='me' ? 'me' : '');
+      d.innerText = m.text;
+      box.appendChild(d);
+    });
+    box.scrollTop = box.scrollHeight;
+  }
+  $('#mini-send').addEventListener('click', ()=>{
+    const t = $('#mini-input').value.trim();
+    if(!t) return;
+    miniMessages.push({text:t, who:'me'});
+    $('#mini-input').value='';
+    renderMiniMessages();
+  });
+
+  /* -------------------- Receitas -------------------- */
+  function renderRecipes(filter='all', q=''){
+    const grid = $('#recipes-grid'); grid.innerHTML='';
+    const userRecipes = JSON.parse(localStorage.getItem('fit_recipes') || 'null') || mockRecipes;
+    const arr = userRecipes.filter(r=>{
+      const okFilter = filter==='all' ? true : r.tags.includes(filter);
+      const okQuery = !q ? true : r.title.toLowerCase().includes(q.toLowerCase());
+      return okFilter && okQuery;
+    });
+    arr.forEach(r=>{
+      const card = document.createElement('div'); card.className='recipe-card';
+      card.innerHTML = `<img src="${r.img}" /><strong>${r.title}</strong><div class="meta">${r.time} min</div>`;
+      grid.appendChild(card);
+    });
+  }
+  $('#filter-recipe').addEventListener('change', e=> renderRecipes(e.target.value, $('#search-recipe').value));
+  $('#search-recipe').addEventListener('input', e=> renderRecipes($('#filter-recipe').value, e.target.value));
+  $('#btn-new-recipe').addEventListener('click', ()=>{
+    const title = prompt('Nome da receita:'); if(!title) return;
+    const tags = prompt('Tags (vírgula)').split(',').map(t=>t.trim());
+    const time = +prompt('Tempo (min)') || 10;
+    const img = 'https://via.placeholder.com/300x150?text=Receita';
+    const arr = JSON.parse(localStorage.getItem('fit_recipes') || '[]');
+    const id = arr.length ? Math.max(...arr.map(x=>x.id))+1 : 1;
+    arr.push({id,title,tags,time,img});
+    localStorage.setItem('fit_recipes', JSON.stringify(arr));
+    renderRecipes($('#filter-recipe').value, $('#search-recipe').value);
+  });
+  renderRecipes();
+
+  /* -------------------- Treinos -------------------- */
+  function renderWorkouts(filter='all'){
+    const container = $('#workouts-list'); container.innerHTML='';
+    const arr = filter==='all' ? mockWorkouts : mockWorkouts.filter(w=>w.type===filter);
+    arr.forEach(w=>{
+      const div = document.createElement('div'); div.className='workout';
+      div.innerHTML = `<strong>${w.title}</strong><div class="meta">${w.duration} min</div>
+        <ul>${w.exercises.map(ex=>`<li>${ex}</li>`).join('')}</ul>`;
+      container.appendChild(div);
+    });
+  }
+  $$('[data-work]').forEach(btn=> btn.addEventListener('click', ()=> renderWorkouts(btn.dataset.work)));
+  renderWorkouts();
+
+  /* -------------------- Evolução de cargas -------------------- */
+  const cargaCtx = document.getElementById('chart-carga').getContext('2d');
+  let cargaChart = new Chart(cargaCtx, {
+    type:'bar',
+    data:{ labels:[], datasets:[{label:'Kg', data:[], backgroundColor:'var(--lavender-300)'}] },
+    options:{ responsive:true, scales:{y:{beginAtZero:true}} }
+  });
+  $('#add-carga').addEventListener('click', ()=>{
+    const name = $('#exercise-name').value.trim();
+    const weight = +$('#exercise-weight').value;
+    if(!name||!weight) return alert('Preencha nome e kg');
+    const arr = JSON.parse(localStorage.getItem('fit_carga') || '[]');
+    arr.push({name,weight});
+    localStorage.setItem('fit_carga', JSON.stringify(arr));
+    updateCargaChart();
+    $('#exercise-name').value=''; $('#exercise-weight').value='';
+  });
+  function updateCargaChart(){
+    const arr = JSON.parse(localStorage.getItem('fit_carga') || '[]');
+    cargaChart.data.labels = arr.map(x=>x.name);
+    cargaChart.data.datasets[0].data = arr.map(x=>x.weight);
+    cargaChart.update();
+  }
+  updateCargaChart();
+
+  /* -------------------- Peso -------------------- */
+  const pesoCtx = document.getElementById('chart-peso').getContext('2d');
+  let pesoChart = new Chart(pesoCtx, {
+    type:'line',
+    data:{ labels:[], datasets:[{label:'Peso (kg)', data:[], borderColor:'var(--lavender-300)', fill:false}] },
+    options:{ responsive:true, scales:{y:{beginAtZero:false}} }
+  });
+  $('#save-medidas').addEventListener('click', ()=>{
+    const peso = +$('#input-peso').value;
+    const cint = +$('#input-cint').value;
+    if(!peso||!cint) return alert('Preencha os campos');
+    const arr = JSON.parse(localStorage.getItem('fit_peso') || '[]');
+    arr.push({peso,cint,date:new Date().toLocaleDateString()});
+    localStorage.setItem('fit_peso', JSON.stringify(arr));
+    updatePesoChart();
+    $('#input-peso').value=''; $('#input-cint').value='';
+  });
+  function updatePesoChart(){
+    const arr = JSON.parse(localStorage.getItem('fit_peso') || '[]');
+    pesoChart.data.labels = arr.map(x=>x.date);
+    pesoChart.data.datasets[0].data = arr.map(x=>x.peso);
+    pesoChart.update();
+  }
+  updatePesoChart();
+
+  /* -------------------- Selfcare -------------------- */
+  const selfcareDefault = ['Meditar 5 min','Hidratar pele','Alongamento rápido'];
+  function loadSelfcare(){ return JSON.parse(localStorage.getItem('fit_selfcare') || 'null') || selfcareDefault.map(t=>({text:t,done:false})); }
+  function saveSelfcare(arr){ localStorage.setItem('fit_selfcare', JSON.stringify(arr)); }
+  function renderSelfcare(){
+    const arr = loadSelfcare();
+    const container = $('#selfcare-checklist'); container.innerHTML='';
+    arr.forEach((it,idx)=>{
+      const div = document.createElement('div'); div.className='item';
+      div.innerHTML = `<label><input type="checkbox" ${it.done?'checked':''} data-idx="${idx}"/> <span>${it.text}</span></label>`;
+      container.appendChild(div);
+    });
+    container.querySelectorAll('input[type=checkbox]').forEach(cb=>{
+      cb.addEventListener('change', e=>{
+        const idx = +e.target.dataset.idx;
+        const arr = loadSelfcare();
+        arr[idx].done = e.target.checked;
+        saveSelfcare(arr);
+      });
+    });
+  }
+  renderSelfcare();
+
+  /* -------------------- Inicialização -------------------- */
+  renderUser();
+  renderChecks();
+  updateProgress();
+  renderWater();
+  renderMiniMessages();
+</script>
