@@ -7,7 +7,7 @@
 <style>
 :root{
   --fundo:#DAC9BC;
-  --font-secundaria:#AAA39D;
+  --font-sec:#AAA39D;
   --font-principal:#A47458;
   --lavender:#C8A2C8;
   --gold:#D4AF37;
@@ -16,29 +16,32 @@
   --radius:14px;
   --shadow:0 6px 20px rgba(0,0,0,0.08);
 }
-html,body{height:100%;margin:0;font-family:"Montserrat",sans-serif;background:var(--fundo);}
+body{margin:0;font-family:"Montserrat",sans-serif;background:var(--fundo);}
 .container{
-  max-width:1000px;margin:60px auto;padding:20px;background:var(--glass);border-radius:var(--radius);box-shadow:var(--shadow);position:relative;
+  max-width:1000px;margin:60px auto;padding:20px;background:var(--glass);
+  border-radius:var(--radius);box-shadow:var(--shadow);position:relative;
   backdrop-filter:blur(10px);
 }
 .banner{
-  position:absolute;top:0;left:0;width:100%;height:200px;background:url('https://i.imgur.com/yourBanner.jpg') center/cover no-repeat;border-radius:var(--radius) var(--radius) 0 0;
-  z-index:-1;
+  position:absolute;top:0;left:0;width:100%;height:180px;
+  background:url('https://i.imgur.com/yourBanner.jpg') center/cover no-repeat;
+  border-radius:var(--radius) var(--radius) 0 0;z-index:-1;
 }
 .logo{
   width:60px;height:60px;border-radius:50%;background:#fff;display:inline-block;margin-right:15px;vertical-align:middle;object-fit:cover;
 }
-h1,h2{text-align:center;color:var(--font-principal);}
+h1{text-align:center;color:var(--font-principal);}
 label{display:block;margin-top:15px;font-weight:600;color:var(--font-principal);}
 input,select,button{width:100%;padding:12px;margin-top:5px;border-radius:var(--radius);border:1px solid #ccc;font-size:1rem;color:#333;}
-input::placeholder{color:var(--font-secundaria);}
+input::placeholder{color:var(--font-sec);}
 button{background:var(--gold);color:#fff;font-weight:700;border:none;cursor:pointer;transition:0.3s;}
 button:hover{background:var(--accent);}
 .image-option{display:inline-block;margin:10px;border:2px solid transparent;border-radius:var(--radius);overflow:hidden;cursor:pointer;text-align:center;}
 .image-option img{width:150px;height:150px;object-fit:cover;display:block;}
 .image-option.selected{border:2px solid var(--gold);}
 .value-tag{margin-top:5px;font-weight:600;color:var(--lavender);}
-#calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:20px;}
+#calendarContainer{display:none;margin-top:20px;}
+#calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;}
 .day{padding:10px;text-align:center;border-radius:var(--radius);cursor:pointer;}
 .available{background-color:#81c784;}
 .occupied{background-color:#e57373;cursor:not-allowed;}
@@ -95,11 +98,11 @@ button:hover{background:var(--accent);}
 <button type="submit">Confirmar Formulário</button>
 </form>
 
-<h2>Escolha a Data</h2>
+<h2>Escolha a Data e Horário</h2>
 <button id="openCalendarBtn">Escolher Data</button>
-<div id="calendarContainer" style="display:none;">
+<div id="calendarContainer">
 <div id="calendar"></div>
-<h3>Escolha o horário:</h3>
+<h3>Horários disponíveis:</h3>
 <div id="horarios"></div>
 <button id="confirmAgendamentoBtn" style="margin-top:15px;">Confirmar Agendamento</button>
 </div>
@@ -176,7 +179,9 @@ const openCalendarBtn=document.getElementById("openCalendarBtn");
 const calendarContainer=document.getElementById("calendarContainer");
 const calendar=document.getElementById("calendar");
 const horariosDiv=document.getElementById("horarios");
-openCalendarBtn.addEventListener("click",()=>{calendarContainer.style.display="block"; gerarCalendar();});
+openCalendarBtn.addEventListener("click",()=>{
+  calendarContainer.style.display="block"; gerarCalendar();
+});
 
 function gerarCalendar(){
   calendar.innerHTML="";
@@ -208,7 +213,11 @@ function gerarHorarios(data){
     btn.className="horario-btn";
     btn.textContent=h;
     if(agendamentos.find(a=>a.data===data && a.hora===h)){btn.classList.add("ocupado"); btn.disabled=true;}
-    btn.addEventListener("click",()=>{document.querySelectorAll("#horarios .horario-btn").forEach(el=>el.classList.remove("selected"));btn.classList.add("selected");selectedHora=h;});
+    btn.addEventListener("click",()=>{
+      document.querySelectorAll("#horarios .horario-btn").forEach(el=>el.classList.remove("selected"));
+      btn.classList.add("selected");
+      selectedHora=h;
+    });
     horariosDiv.appendChild(btn);
   });
 }
@@ -223,10 +232,4 @@ confirmBtn.addEventListener("click",()=>{
   const telefone=document.getElementById("telefone").value;
   agendamentos.push({nome,telefone,tranca:selectedTranca.nome,tamanho:selectedTamanho.nome,data:selectedData,hora:selectedHora,valor:valorTotal});
   const mensagem=`Olá ${nome}! Seu agendamento com nossa equipe foi confirmado para ${selectedTranca.nome} (${selectedTamanho.nome}) no dia ${selectedData} às ${selectedHora}. Valor: R$${valorTotal}. Aguardamos você! 💜`;
-  const whatsappUrl=`https://api.whatsapp.com/send?phone=55${telefone.replace(/\D/g,'')}&text=${encodeURIComponent(mensagem)}`;
-  window.open(whatsappUrl,"_blank");
-  alert("Agendamento confirmado! Mensagem pronta no WhatsApp foi aberta.");
-});
-</script>
-</body>
-</html>
+  const whatsappUrl=`https://api.whatsapp.com/send?phone=553899
