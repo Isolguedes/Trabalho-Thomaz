@@ -35,9 +35,9 @@ input,select,button{width:100%;padding:12px;margin-top:5px;border-radius:var(--r
 input::placeholder{color:var(--sec);}
 button{background:var(--gold);color:#fff;font-weight:700;border:none;cursor:pointer;transition:0.3s;}
 button:hover{background:var(--accent);}
-.image-option{display:inline-block;margin:10px;border:2px solid transparent;border-radius:var(--radius);overflow:hidden;cursor:pointer;text-align:center;}
+.image-option{display:inline-block;margin:10px;border:2px solid transparent;border-radius:var(--radius);overflow:hidden;cursor:pointer;text-align:center;width:150px;}
 .image-option img{width:150px;height:150px;object-fit:cover;display:block;}
-.image-option.selected{border:2px solid var(--gold);}
+.image-option.selected{border:3px solid var(--gold);}
 .value-tag{margin-top:5px;font-weight:600;color:var(--lavender);}
 #calendarContainer{display:none;margin-top:20px;background:#fff;padding:15px;border-radius:var(--radius);}
 .calendar-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-weight:600;color:var(--prim);}
@@ -116,14 +116,23 @@ button:hover{background:var(--accent);}
 </div>
 
 <script>
-// Dados tranças e tamanhos
-const tipoTrancas=[{name:"Nagô",valor:100,img:"https://i.imgur.com/qZs8t4b.jpg"},{name:"Box Braids Curto",valor:150,img:"https://i.imgur.com/8Kf1Uwl.jpg"},{name:"Box Braids Longo",valor:200,img:"https://i.imgur.com/HqQ5S0v.jpg"}];
-const tamanhos=[{name:"Curto",valor:0,img:"https://i.imgur.com/7Q7Lr3r.jpg"},{name:"Médio",valor:20,img:"https://i.imgur.com/QbM7s0u.jpg"},{name:"Longo",valor:40,img:"https://i.imgur.com/mLOyG9h.jpg"},{name:"Extra Longo",valor:60,img:"https://i.imgur.com/BlFv6r3.jpg"}];
+// Dados tranças e tamanhos com fotos
+const tipoTrancas=[
+  {name:"Nagô",valor:100,img:"https://i.imgur.com/qZs8t4b.jpg"},
+  {name:"Box Braids Curto",valor:150,img:"https://i.imgur.com/8Kf1Uwl.jpg"},
+  {name:"Box Braids Longo",valor:200,img:"https://i.imgur.com/HqQ5S0v.jpg"}
+];
+const tamanhos=[
+  {name:"Curto",valor:0,img:"https://i.imgur.com/7Q7Lr3r.jpg"},
+  {name:"Médio",valor:20,img:"https://i.imgur.com/QbM7s0u.jpg"},
+  {name:"Longo",valor:40,img:"https://i.imgur.com/mLOyG9h.jpg"},
+  {name:"Extra Longo",valor:60,img:"https://i.imgur.com/BlFv6r3.jpg"}
+];
 
 let agendamentos=[];
 let selectedTranca=null,selectedTamanho=null,selectedData=null,selectedHora=null,valorTotal=0;
 
-// Criar opções de trança e tamanho
+// Criar opções
 function criarOpcoes(container,dados,isTamanho=false){
   dados.forEach(t=>{
     let div=document.createElement("div");
@@ -232,4 +241,9 @@ document.getElementById("confirmAgendamentoBtn").addEventListener("click",()=>{
   agendamentos.push({nome,telefone,tranca:selectedTranca.name,tamanho:selectedTamanho.name,data:selectedData,hora:selectedHora,valor:valorTotal});
   const mensagem=`Olá ${nome}! 💜 Seu agendamento foi confirmado para ${selectedTranca.name} (${selectedTamanho.name}) no dia ${selectedData} às ${selectedHora}. Valor: R$${valorTotal}. Estamos ansiosas para te atender!`;
   const whatsappUrl=`https://api.whatsapp.com/send?phone=5538999244236&text=${encodeURIComponent(mensagem)}`;
-  window.open(whatsappUrl,"
+  window.open(whatsappUrl,"_blank");
+  alert("Agendamento confirmado! Mensagem pronta no WhatsApp foi aberta.");
+});
+</script>
+</body>
+</html>
