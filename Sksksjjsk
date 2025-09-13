@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agendamento de Tranças</title>
+<style>
+:root{
+  --fundo:#DAC9BC;
+  --font-secundaria:#AAA39D;
+  --font-principal:#A47458;
+  --lavender:#C8A2C8;
+  --gold:#D4AF37;
+  --accent:#FF78A6;
+  --glass:rgba(255,255,255,0.7);
+  --radius:14px;
+  --shadow:0 6px 20px rgba(0,0,0,0.08);
+}
+html,body{height:100%;margin:0;font-family:"Montserrat",sans-serif;background:var(--fundo);}
+.container{
+  max-width:1000px;margin:60px auto;padding:20px;background:var(--glass);border-radius:var(--radius);box-shadow:var(--shadow);position:relative;
+  backdrop-filter:blur(10px);
+}
+.banner{
+  position:absolute;top:0;left:0;width:100%;height:200px;background:url('https://i.imgur.com/yourBanner.jpg') center/cover no-repeat;border-radius:var(--radius) var(--radius) 0 0;
+  z-index:-1;
+}
+.logo{
+  width:60px;height:60px;border-radius:50%;background:#fff;display:inline-block;margin-right:15px;vertical-align:middle;object-fit:cover;
+}
+h1,h2{text-align:center;color:var(--font-principal);}
+label{display:block;margin-top:15px;font-weight:600;color:var(--font-principal);}
+input,select,button{width:100%;padding:12px;margin-top:5px;border-radius:var(--radius);border:1px solid #ccc;font-size:1rem;color:#333;}
+input::placeholder{color:var(--font-secundaria);}
+button{background:var(--gold);color:#fff;font-weight:700;border:none;cursor:pointer;transition:0.3s;}
+button:hover{background:var(--accent);}
+.image-option{display:inline-block;margin:10px;border:2px solid transparent;border-radius:var(--radius);overflow:hidden;cursor:pointer;text-align:center;}
+.image-option img{width:150px;height:150px;object-fit:cover;display:block;}
+.image-option.selected{border:2px solid var(--gold);}
+.value-tag{margin-top:5px;font-weight:600;color:var(--lavender);}
+#calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:20px;}
+.day{padding:10px;text-align:center;border-radius:var(--radius);cursor:pointer;}
+.available{background-color:#81c784;}
+.occupied{background-color:#e57373;cursor:not-allowed;}
+.blocked{background-color:#b0bec5;cursor:not-allowed;}
+#horarios{display:flex;flex-wrap:wrap;margin-top:10px;}
+.horario-btn{padding:10px 15px;margin:5px;border-radius:var(--radius);border:none;cursor:pointer;background:var(--lavender);color:#fff;}
+.horario-btn.ocupado{background:#e57373;cursor:not-allowed;}
+.horario-btn.selected{border:2px solid var(--gold);}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="banner"></div>
+<div style="display:flex;align-items:center;justify-content:center;">
+<img class="logo" src="https://i.imgur.com/yourLogo.jpg" alt="Logo">
+<h1>Agendamento de Tranças</h1>
+</div>
+
+<form id="agendamentoForm">
+<label>Nome:</label><input type="text" id="nome" placeholder="Digite seu nome" required>
+<label>Telefone/WhatsApp:</label><input type="text" id="telefone" placeholder="(XX) XXXXX-XXXX" required>
+<label>Foto do cabelo:</label><input type="file" id="foto" accept="image/*" required>
+
+<label>Tipo de Trança:</label><div id="tipoTrancaContainer"></div>
+<label>Tamanho:</label><div id="tamanhoContainer"></div>
+
+<label>Material:</label>
+<select id="material">
+<option value="Cliente">Fornecido pela Cliente</option>
+<option value="Trancista">Fornecido pela Trancista (+R$50)</option>
+</select>
+<div id="corContainer" style="display:none;">
+<label>Escolher Cor:</label>
+<select id="cores">
+<option value="Natural">Natural</option>
+<option value="Preto">Preto</option>
+<option value="Castanho">Castanho</option>
+<option value="Outra">Outra</option>
+</select>
+<div id="outraCorContainer" style="display:none;">
+<input type="text" id="outraCor" placeholder="Digite a cor desejada">
+<input type="file" id="fotoCor" accept="image/*">
+</div>
+</div>
+
+<label>Serviço Adicional:</label>
+<select id="servicoAdicional">
+<option value="Nenhum">Nenhum</option>
+<option value="HidratacaoPre">Hidratação Pré-Trança (+R$30)</option>
+<option value="CronogramaPos">Cronograma Pós-Trança (+R$30)</option>
+</select>
+
+<p><strong>Valor Total: R$<span id="valorTotal">0</span></strong></p>
+<button type="submit">Confirmar Formulário</button>
+</form>
+
+<h2>Escolha a Data</h2>
+<button id="openCalendarBtn">Escolher Data</button>
+<div id="calendarContainer" style="display:none;">
+<div id="calendar"></div>
+<h3>Escolha o horário:</h3>
+<div id="horarios"></div>
+<button id="confirmAgendamentoBtn" style="margin-top:15px;">Confirmar Agendamento</button>
+</div>
+</div>
+
+<script>
+// Dados
+const tipoTrancas=[
+{name:"Nagô",valor:100,img:"https://i.imgur.com/qZs8t4b.jpg",duracao:1.5},
+{name:"Box Braids Curto",valor:150,img:"https://i.imgur.com/8Kf1Uwl.jpg",duracao:4},
+{name:"Box Braids Longo",valor:200,img:"https://i.imgur.com/HqQ5S0v.jpg",duracao:6},
+{name:"Twist",valor:120,img:"https://i.imgur.com/3kMZR0x.jpg",duracao:3},
+{name:"Knotless",valor:180,img:"https://i.imgur.com/8p0g0IH.jpg",duracao:5},
+{name:"Chassé",valor:80,img:"https://i.imgur.com/4l3d5rG.jpg",duracao:2}];
+
+const tamanhos=[
+{name:"Curto",valor:0,img:"https://i.imgur.com/7Q7Lr3r.jpg"},
+{name:"Médio",valor:20,img:"https://i.imgur.com/QbM7s0u.jpg"},
+{name:"Longo",valor:40,img:"https://i.imgur.com/mLOyG9h.jpg"},
+{name:"Extra Longo",valor:60,img:"https://i.imgur.com/BlFv6r3.jpg"}];
+
+let agendamentos=[];
+let selectedTranca=null,selectedTamanho=null,selectedData=null,selectedHora=null,valorTotal=0;
+
+// Criar opções
+function criarOpcoes(container,dados,isTamanho=false){
+  dados.forEach(t=>{
+    let div=document.createElement("div");
+    div.className="image-option";
+    div.innerHTML=`<img src="${t.img}"><div>${t.nome}</div><div class="value-tag">R$${t.valor}</div>`;
+    div.addEventListener("click", ()=>{
+      document.querySelectorAll(container+" .image-option").forEach(el=>el.classList.remove("selected"));
+      div.classList.add("selected");
+      if(isTamanho) selectedTamanho=t; else selectedTranca=t;
+      calcularValor();
+    });
+    document.querySelector(container).appendChild(div);
+  });
+}
+criarOpcoes("#tipoTrancaContainer",tipoTrancas);
+criarOpcoes("#tamanhoContainer",tamanhos,true);
+
+// Material e cores
+const materialSelect=document.getElementById("material");
+const corContainer=document.getElementById("corContainer");
+materialSelect.addEventListener("change",()=>{
+  if(materialSelect.value==="Trancista") corContainer.style.display="block";
+  else {corContainer.style.display="none";document.getElementById("outraCorContainer").style.display="none";}
+});
+const coresSelect=document.getElementById("cores");
+const outraCorContainer=document.getElementById("outraCorContainer");
+coresSelect.addEventListener("change",()=>{
+  if(coresSelect.value==="Outra") outraCorContainer.style.display="block";
+  else outraCorContainer.style.display="none";
+  calcularValor();
+});
+
+// Serviço adicional
+const servicoSelect=document.getElementById("servicoAdicional");
+servicoSelect.addEventListener("change",calcularValor);
+
+// Calcular valor
+function calcularValor(){
+  valorTotal=0;
+  if(selectedTranca) valorTotal+=selectedTranca.valor;
+  if(selectedTamanho) valorTotal+=selectedTamanho.valor;
+  if(materialSelect.value==="Trancista") valorTotal+=50;
+  if(servicoSelect.value!=="Nenhum") valorTotal+=30;
+  document.getElementById("valorTotal").textContent=valorTotal;
+}
+
+// Calendário
+const openCalendarBtn=document.getElementById("openCalendarBtn");
+const calendarContainer=document.getElementById("calendarContainer");
+const calendar=document.getElementById("calendar");
+const horariosDiv=document.getElementById("horarios");
+openCalendarBtn.addEventListener("click",()=>{calendarContainer.style.display="block"; gerarCalendar();});
+
+function gerarCalendar(){
+  calendar.innerHTML="";
+  const hoje=new Date();
+  for(let i=0;i<30;i++){
+    let data=new Date();
+    data.setDate(hoje.getDate()+i);
+    let diaSemana=data.getDay();
+    let diaDiv=document.createElement("div");
+    diaDiv.className="day";
+    let dataStr=data.toISOString().split('T')[0];
+    if(diaSemana===1||diaSemana===2){diaDiv.classList.add("blocked");}
+    else{diaDiv.classList.add("available"); diaDiv.addEventListener("click",()=>selecionarData(dataStr));}
+    diaDiv.textContent=dataStr;
+    calendar.appendChild(diaDiv);
+  }
+}
+
+function selecionarData(data){
+  selectedData=data;
+  gerarHorarios(data);
+}
+
+function gerarHorarios(data){
+  horariosDiv.innerHTML="";
+  const horasDisponiveis=["08:00","10:00","12:00","14:00","16:00","18:00"];
+  horasDisponiveis.forEach(h=>{
+    let btn=document.createElement("button");
+    btn.className="horario-btn";
+    btn.textContent=h;
+    if(agendamentos.find(a=>a.data===data && a.hora===h)){btn.classList.add("ocupado"); btn.disabled=true;}
+    btn.addEventListener("click",()=>{document.querySelectorAll("#horarios .horario-btn").forEach(el=>el.classList.remove("selected"));btn.classList.add("selected");selectedHora=h;});
+    horariosDiv.appendChild(btn);
+  });
+}
+
+// Confirmação
+const confirmBtn=document.getElementById("confirmAgendamentoBtn");
+confirmBtn.addEventListener("click",()=>{
+  if(!selectedData || !selectedHora){alert("Escolha data e horário"); return;}
+  if(!selectedTranca || !selectedTamanho){alert("Escolha trança e tamanho"); return;}
+  if(!document.getElementById("foto").files.length){alert("Envie a foto do cabelo"); return;}
+  const nome=document.getElementById("nome").value;
+  const telefone=document.getElementById("telefone").value;
+  agendamentos.push({nome,telefone,tranca:selectedTranca.nome,tamanho:selectedTamanho.nome,data:selectedData,hora:selectedHora,valor:valorTotal});
+  const mensagem=`Olá ${nome}! Seu agendamento com nossa equipe foi confirmado para ${selectedTranca.nome} (${selectedTamanho.nome}) no dia ${selectedData} às ${selectedHora}. Valor: R$${valorTotal}. Aguardamos você! 💜`;
+  const whatsappUrl=`https://api.whatsapp.com/send?phone=55${telefone.replace(/\D/g,'')}&text=${encodeURIComponent(mensagem)}`;
+  window.open(whatsappUrl,"_blank");
+  alert("Agendamento confirmado! Mensagem pronta no WhatsApp foi aberta.");
+});
+</script>
+</body>
+</html>
