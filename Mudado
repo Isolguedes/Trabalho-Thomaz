@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fit & Chic — Organizador Fitness</title>
+<style>
+  body { margin:0; font-family: 'Montserrat', sans-serif; background-color:#f8f4f9; }
+  header { background-color:#9c27b0; color:#fff; text-align:center; padding:15px; position:relative; }
+  header img.logo { position:absolute; left:10px; top:5px; width:50px; height:50px; object-fit:cover; border-radius:8px; }
+  header img.perfil { position:absolute; right:10px; top:5px; width:50px; height:50px; object-fit:cover; border-radius:50%; }
+  main { padding:15px; }
+  section { margin-bottom:25px; background:#fff; padding:15px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
+  h2 { color:#9c27b0; }
+  button { padding:8px 15px; background:#9c27b0; color:#fff; border:none; border-radius:5px; cursor:pointer; margin-top:5px; }
+  input, select, textarea { width:100%; padding:8px; margin:5px 0; border-radius:5px; border:1px solid #ccc; }
+  .card { margin-bottom:15px; padding:10px; border:1px solid #ddd; border-radius:8px; background:#fafafa; }
+  .timer { font-size:24px; font-weight:bold; text-align:center; margin-top:10px; color:#9c27b0; }
+  .gallery img { width:100%; max-height:200px; object-fit:cover; margin-bottom:5px; border-radius:5px; }
+  nav { display:flex; justify-content:space-around; position:fixed; bottom:0; width:100%; background:#fff; border-top:1px solid #ddd; padding:10px 0; }
+  nav button { background:none; color:#9c27b0; font-weight:bold; font-size:14px; }
+</style>
+</head>
+<body>
+
+<header>
+  <img class="logo" src="https://via.placeholder.com/50" alt="Logo Fit & Chic">
+  <img id="perfilFoto" class="perfil" src="https://via.placeholder.com/50" alt="Foto">
+  <h1>Fit & Chic</h1>
+</header>
+
+<main id="app">
+
+<!-- LOGIN -->
+<section id="loginSection">
+  <h2>Login</h2>
+  <input type="text" id="nomeUsuario" placeholder="Seu nome">
+  <input type="email" id="emailUsuario" placeholder="Seu email">
+  <input type="file" id="fotoUsuario" accept="image/*">
+  <button onclick="login()">Entrar</button>
+</section>
+
+<!-- DASHBOARD -->
+<section id="dashboard" style="display:none;">
+  <h2>Olá, <span id="userNome"></span>!</h2>
+
+  <!-- Checklists -->
+  <div class="card">
+    <h3>Hidratação 💧</h3>
+    <p>Peso (kg): <input type="number" id="pesoUsuario" placeholder="kg" onchange="calcularAgua()"></p>
+    <p>Meta de água: <span id="aguaMeta">0</span> ml</p>
+    <div>
+      <label><input type="checkbox" class="checklist" data-tipo="agua"> Beber água</label>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Treino 🏋️‍♀️</h3>
+    <div id="treinoLista"></div>
+    <button onclick="iniciarTreino()">Iniciar treino</button>
+    <p id="exercicioAtual">Nenhum exercício ativo</p>
+    <p id="repsAtual"></p>
+    <p id="pausaAtual"></p>
+    <div class="timer" id="timerDisplay">00:00</div>
+  </div>
+
+  <div class="card">
+    <h3>Receitas Fit 🥗</h3>
+    <div id="receitasList"></div>
+    <button onclick="adicionarReceita()">Adicionar Receita</button>
+  </div>
+
+  <div class="card">
+    <h3>Mensagens Positivas ✨</h3>
+    <textarea id="mensagemInput" placeholder="Escreva sua mensagem..."></textarea>
+    <button onclick="adicionarMensagem()">Adicionar</button>
+    <ul id="mensagensList"></ul>
+  </div>
+
+  <div class="card">
+    <h3>Fotos de Evolução 📸</h3>
+    <input type="file" id="fotoEvolucao" accept="image/*" onchange="adicionarFotoEvolucao(event)">
+    <div class="gallery" id="galeriaFotos"></div>
+  </div>
+
+  <div class="card">
+    <h3>Progresso e Medidas 📏</h3>
+    <p>Cintura: <input type="number" id="medCintura" placeholder="cm" onchange="salvarMedidas()"></p>
+    <p>Quadril: <input type="number" id="medQuadril" placeholder="cm" onchange="salvarMedidas()"></p>
+    <p>Glúteo: <input type="number" id="medGluteo" placeholder="cm" onchange="salvarMedidas()"></p>
+    <p>Ombro: <input type="number" id="medOmbro" placeholder="cm" onchange="salvarMedidas()"></p>
+    <p>Coxa: <input type="number" id="medCoxa" placeholder="cm" onchange="salvarMedidas()"></p>
+    <p>Braço: <input type="number" id="medBraco" placeholder="cm" onchange="salvarMedidas()"></p>
+    <p>Peso: <input type="number" id="medPeso" placeholder="kg" onchange="salvarMedidas()"></p>
+  </div>
+
+</section>
+
+</main>
+
+<nav>
+  <button onclick="mostrarSecao('dashboard')">Dashboard</button>
+</nav>
+
+<script>
+  // ----- LOGIN -----
+  function login(){
+    const nome = document.getElementById('nomeUsuario').value;
+    const email = document.getElementById('emailUsuario').value;
+    const fotoFile = document.getElementById('fotoUsuario').files[0];
+
+    if(!nome || !email) return alert('Preencha todos os campos!');
+
+    const reader = new FileReader();
+    reader.onload = function(){
+      localStorage.setItem('userFoto', reader.result);
+      localStorage.setItem('userNome', nome);
+      localStorage.setItem('userEmail', email);
+      mostrarDashboard();
+    }
+    if(fotoFile) reader.readAsDataURL(fotoFile);
+    else mostrarDashboard();
+  }
+
+  function mostrarDashboard(){
+    document.getElementById('loginSection').style.display='none';
+    document.getElementById('dashboard').style.display='block';
+    document.getElementById('userNome').innerText = localStorage.getItem('userNome') || 'Usuária';
+    const foto = localStorage.getItem('userFoto');
+    if(foto) document.getElementById('perfilFoto').src = foto;
+
+    carregarReceitas();
+    carregarMensagens();
+    carregarFotos();
+    carregarMedidas();
+    carregarTreinos();
+  }
+
+  // ----- Hidratação -----
+  function calcularAgua(){
+    const peso = document.getElementById('pesoUsuario').value;
+    const ml = Math.round(peso * 35); // 35ml/kg
+    document.getElementById('aguaMeta').innerText = ml;
+    localStorage.setItem('aguaMeta', ml);
+  }
+
+  // ----- TREINO -----
+  let treinos = JSON.parse(localStorage.getItem('treinos') || '[]');
+  if(treinos.length===0){
+    treinos = [
+      {nome:'Agachamento', repeticoes:15, pausa:30},
+      {nome:'Abdominal', repeticoes:20, pausa:20},
+      {nome:'Flexão', repeticoes:12, pausa:30}
+    ];
+    localStorage.setItem('treinos', JSON.stringify(treinos));
+  }
+
+  let treinoIndex = 0;
+  let som = new Audio('https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg');
+
+  function carregarTreinos(){
+    const div = document.getElementById('treinoLista');
+    div.innerHTML='';
+    treinos.forEach((t,i)=>{
+      const card = document.createElement('div');
+      card.className='card';
+      card.innerHTML = `<strong>${t.nome}</strong> - Reps: ${t.repeticoes}, Pausa: ${t.pausa}s
+        <button onclick="editarTreino(${i})">Editar</button>
+        <button onclick="excluirTreino(${i})">Excluir</button>`;
+      div.appendChild(card);
+    });
+  }
+
+  function iniciarTreino(){
+    if(treinos.length===0) return alert('Adicione exercícios primeiro!');
+    treinoIndex=0;
+    executarExercicio(treinoIndex);
+  }
+
+  function executarExercicio(i){
+    if(i>=treinos.length) return alert('Treino concluído! 💪');
+    const e = treinos[i];
+    document.getElementById('exercicioAtual').innerText = e.nome;
+    document.getElementById('repsAtual').innerText = `Repetições: ${e.repeticoes}`;
+    document.getElementById('pausaAtual').innerText = `Pausa: ${e.pausa}s`;
+
+    let tempo = parseInt(e.pausa);
+    document.getElementById('timerDisplay').innerText = `${tempo}s`;
+    const intervalo = setInterval(()=>{
+      tempo--;
+      document.getElementById('timerDisplay').innerText = `${tempo}s`;
+      if(tempo<=0){
+        clearInterval(intervalo);
+        som.play();
+        executarExercicio(i+1);
+      }
+    },1000);
+  }
+
+  function editarTreino(i){
+    const t = treinos[i];
+    const novoNome = prompt('Nome do exercício:', t.nome);
+    const novaRep = prompt('Repetições:', t.repeticoes);
+    const novaPausa = prompt('Pausa (s):', t.pausa);
+    if(novoNome && novaRep && novaPausa){
+      treinos[i]={nome:novoNome, repeticoes:parseInt(novaRep), pausa:parseInt(novaPausa)};
+      localStorage.setItem('treinos', JSON.stringify(treinos));
+      carregarTreinos();
+    }
+  }
+
+  function excluirTreino(i){
+    treinos.splice(i,1);
+    localStorage.setItem('treinos', JSON.stringify(treinos));
+    carregarTreinos();
+  }
+
+  // ----- RECEITAS -----
+  function adicionarReceita(){
+    const nome = prompt('Nome da receita:');
+    const ingredientes = prompt('Ingredientes (separados por vírgula):');
+    const modo = prompt('Modo de preparo:');
+    if(!nome) return;
+    const receitas = JSON.parse(localStorage.getItem('receitas') || '[]');
+    receitas.push({nome, ingredientes, modo});
+    localStorage.setItem('receitas', JSON.stringify(receitas));
+    carregarReceitas();
+  }
+
+  function carregarReceitas(){
+    const receitas = JSON.parse(localStorage.getItem('receitas') || '[]');
+    const div = document.getElementById('receitasList');
+    div.innerHTML='';
+    receitas.forEach((r,i)=>{
+      const card = document.createElement('div');
+      card.className='card';
+      card.innerHTML = `<strong>${r.nome}</strong>
+        <button onclick="verReceita(${i})">Ver receita</button>
+        <button onclick="excluirReceita(${i})">Excluir</button>`;
+      div.appendChild(card);
+    });
+  }
+
+  function verReceita(i){
+    const receitas = JSON.parse(localStorage.getItem('receitas') || '[]');
+    const r = receitas[i];
+    alert(`Ingredientes: ${r.ingredientes}\n\nModo de preparo:\n${r.modo}`);
+  }
+
+  function excluirReceita(i){
+    const receitas = JSON.parse(localStorage.getItem('receitas') || '[]');
+    receitas.splice(i,1);
+    localStorage.setItem('receitas', JSON.stringify(receitas));
+    carregarReceitas();
+  }
+
+  // ----- MENSAGENS POSITIVAS -----
+  function adicionarMensagem(){
+    const msg = document.getElementById('mensagemInput').value;
+    if(!msg) return;
+    const msgs = JSON.parse(localStorage.getItem('mensagens') || '[]');
+    msgs.push(msg);
+    localStorage.setItem('mensagens', JSON.stringify(msgs));
+    document.getElementById('mensagemInput').value='';
+    carregarMensagens();
+  }
+
+  function carregarMensagens(){
+    const msgs = JSON.parse(localStorage.getItem('mensagens') || '[]');
+    const ul = document.getElementById('mensagensList');
+    ul.innerHTML='';
+    msgs.forEach((m,i)=>{
+      const li = document.createElement('li');
+      li.innerText = m;
+      ul.appendChild(li);
+    });
+  }
+
+  // ----- GALERIA -----
+  function adicionarFotoEvolucao(e){
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function(){
+      const fotos = JSON.parse(localStorage.getItem('fotosEvolucao') || '[]');
+      fotos.unshift(reader.result);
+      localStorage.setItem('fotosEvolucao', JSON.stringify(fotos));
+      carregarFotos();
+    }
+    reader.readAsDataURL(file);
+  }
+
+  function carregarFotos(){
+    const fotos = JSON.parse(localStorage.getItem('fotosEvolucao') || '[]');
+    const div = document.getElementById('galeriaFotos');
+    div.innerHTML='';
+    fotos.forEach(f=>{
+      const img = document.createElement('img');
+      img.src=f;
+      div.appendChild(img);
+    });
+  }
+
+  // ----- MEDIDAS -----
+  function salvarMedidas(){
+    const medidas = {
+      cintura: document.getElementById('medCintura').value,
+      quadril: document.getElementById('medQuadril').value,
+      gluteo: document.getElementById('medGluteo').value,
+      ombro: document.getElementById('medOmbro').value,
+      coxa: document.getElementById('medCoxa').value,
+      braco: document.getElementById('medBraco').value,
+      peso: document.getElementById('medPeso').value
+    };
+    localStorage.setItem('medidas', JSON.stringify(medidas));
+  }
+
+  function carregarMedidas(){
+    const medidas = JSON.parse(localStorage.getItem('medidas') || '{}');
+    if(medidas.cintura) document.getElementById('medCintura').value = medidas.cintura;
+    if(medidas.quadril) document.getElementById('medQuadril').value = medidas.quadril;
+    if(medidas.gluteo) document.getElementById('medGluteo').value = medidas.gluteo;
+    if(medidas.ombro) document.getElementById('medOmbro').value = medidas.ombro;
+    if(medidas.coxa) document.getElementById('medCoxa').value = medidas.coxa;
+    if(medidas.braco) document.getElementById('medBraco').value = medidas.braco;
+    if(medidas.peso) document.getElementById('medPeso').value = medidas.peso;
+  }
+
+  function mostrarSecao(sec){
+    document.getElementById('dashboard').style.display = (sec==='dashboard')?'block':'none';
+  }
+
+</script>
+
+</body>
+</html>
